@@ -49,9 +49,17 @@ body{
 .brand{--logo-size:40px;display:flex;align-items:center;gap:11px}
 .brand.sm{--logo-size:32px}
 .brand.lg{--logo-size:48px}
-.logo-mark{width:var(--logo-size);height:var(--logo-size);flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;overflow:hidden;box-shadow:0 2px 7px rgba(31,107,148,.20),inset 0 1px 0 rgba(255,255,255,.16)}
-.logo-mark svg{width:100%;height:100%;display:block}
+.logo-mark{width:var(--logo-size);height:var(--logo-size);flex:none;display:inline-flex;align-items:center;justify-content:center;filter:drop-shadow(0 3px 6px rgba(16,58,116,.25))}
+.logo-mark img{width:100%;height:100%;display:block;object-fit:contain}
 .logo-wordmark{font-size:calc(var(--logo-size)*.46);font-weight:700;color:var(--ink);letter-spacing:.4px;line-height:1.1}
+/* 品牌字：以 logo 蓝为主、青绿收尾的极轻渐变，衬线字更精致（不支持渐变裁切时回退纯深蓝） */
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .logo-wordmark{
+    background:linear-gradient(118deg,#1F6B94 12%,#1B61B1 52%,#2E8B80 118%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+}
 .spacer{flex:1}
 .tag{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-xs);font-weight:500;padding:3px 10px;border-radius:999px;background:var(--c-surface-2);color:var(--c-text-2)}
 .tag.brand{background:var(--c-brand-soft);color:var(--c-brand)}
@@ -553,6 +561,8 @@ details.pc[open] summary.pc-top{border-bottom:1px solid var(--c-border)}
 .drawer-brand{flex:none;background:linear-gradient(135deg,var(--brand-accent-1),var(--brand-accent-2) 56%,var(--brand-accent-3));color:#fff;padding:20px 20px 18px}
 .drawer-brand .db-t{font-size:16px;font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
 .drawer-brand .db-t .logo-mark{width:26px;height:26px}
+/* 抽屉品牌带为蓝青渐变深底，蓝色 logo 反白呈现，保证清晰与层次 */
+.drawer-brand .db-t .logo-mark{filter:grayscale(1) brightness(0) invert(1) drop-shadow(0 1px 2px rgba(5,32,60,.35));opacity:.96}
 .drawer-brand .db-d{font-size:12px;color:rgba(255,255,255,.84);margin-top:5px;line-height:1.55}
 .drawer-nav{flex:1;overflow-y:auto;padding:14px 12px}
 .drawer-nav .nav{display:flex;flex-direction:column;gap:4px;border:none;padding:0;margin:0;background:transparent;overflow:visible}
@@ -870,6 +880,100 @@ details.pc[open] summary.pc-top{border-bottom:1px solid var(--c-border)}
 }
 @media(max-width:420px){.ability-grid{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.poster-track{animation:none}}
+
+/* ===== 首页交互质感（仅首页生效：Hero 叙事背景 + 玻璃 CTA + 高光滑过 + Ripple + 鼠标 Halo） ===== */
+/* 一、Hero 轻背景层：复用 .home-hero 结构，用 ::before 承载，不新增 DOM */
+.home-hero{position:relative}
+.home-hero::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(90deg,rgba(246,250,252,.95) 0%,rgba(246,250,252,.78) 36%,rgba(246,250,252,.34) 68%,rgba(246,250,252,.46) 100%),
+    url('assets/home-hero-bg.png');
+  background-size:cover;background-position:center;
+  opacity:.5;
+}
+.home-hero-copy,.home-hero-anchor,.home-hero .cta{position:relative;z-index:1}
+
+/* 二~五、玻璃质感 Primary CTA（只作用于首页 Hero 按钮） */
+.home-hero .cta .btn{position:relative;overflow:hidden}
+.home-hero .cta .btn.primary{
+  color:var(--c-ink);
+  background:rgba(255,255,255,.52);
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 8px 24px rgba(20,60,80,.10);
+  transition:transform 200ms ease,box-shadow 200ms ease,background 200ms ease,border-color 200ms ease;
+}
+@supports ((backdrop-filter:blur(10px)) or (-webkit-backdrop-filter:blur(10px))){
+  .home-hero .cta .btn.primary{
+    background:rgba(255,255,255,.44);
+    -webkit-backdrop-filter:blur(10px) saturate(120%);
+    backdrop-filter:blur(10px) saturate(120%);
+  }
+}
+.home-hero .cta .btn.primary:hover{
+  background:rgba(255,255,255,.58);
+  border-color:rgba(255,255,255,.9);
+  transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(20,60,80,.15);
+}
+.home-hero .cta .btn.primary:active{
+  transform:translateY(0) scale(.975);
+  transition-duration:120ms;
+  box-shadow:0 6px 18px rgba(20,60,80,.10);
+}
+/* 不支持 backdrop-filter 时自动降级为更实的半透明底，保证可读可点 */
+@supports not ((backdrop-filter:blur(10px)) or (-webkit-backdrop-filter:blur(10px))){
+  .home-hero .cta .btn.primary{background:rgba(255,255,255,.8)}
+  .home-hero .cta .btn.primary:hover{background:rgba(255,255,255,.88)}
+}
+/* 四、hover 高光带：极淡，从左向右滑过一次 */
+.home-hero .cta .btn.primary::after{
+  content:'';position:absolute;top:0;bottom:0;left:0;width:60%;
+  background:linear-gradient(105deg,rgba(255,255,255,0),rgba(255,255,255,.6),rgba(255,255,255,0));
+  opacity:0;transform:translateX(-170%);pointer-events:none;
+}
+.home-hero .cta .btn.primary:hover::after{animation:homeCtaSheen 720ms ease-out}
+@keyframes homeCtaSheen{
+  0%{opacity:0;transform:translateX(-170%)}
+  22%{opacity:.28}
+  100%{opacity:0;transform:translateX(210%)}
+}
+/* 六、按钮内点击波纹（由 JS 按真实点击位置生成） */
+.cta-ripple{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,.65) 0%,rgba(214,236,236,.35) 55%,rgba(214,236,236,0) 72%);
+  transform:scale(0);opacity:.3;
+  animation:homeCtaRipple 650ms ease-out forwards;
+}
+@keyframes homeCtaRipple{to{transform:scale(1);opacity:0}}
+/* 七、鼠标跟随 pointer halo（固定定位，极小、半透明，不挡点击） */
+#homeHalo{
+  position:fixed;left:0;top:0;z-index:999998;width:34px;height:34px;margin:-17px 0 0 -17px;
+  border-radius:50%;pointer-events:none;opacity:0;will-change:transform;
+  background:radial-gradient(circle,rgba(46,139,128,.32) 0%,rgba(59,143,180,.14) 45%,rgba(59,143,180,0) 70%);
+  transition:opacity 260ms ease;
+}
+#homeHalo.halo-on{opacity:.4}
+@media (hover:none),(pointer:coarse){#homeHalo{display:none}}
+/* 八、首页点击扩散圆环（水面轻触感，极细线） */
+.home-click-ring{
+  position:fixed;left:0;top:0;z-index:60;width:34px;height:34px;margin:-17px 0 0 -17px;
+  border-radius:50%;border:1.5px solid rgba(59,143,180,.45);pointer-events:none;
+  animation:homeClickRing 620ms ease-out forwards;
+}
+@keyframes homeClickRing{
+  0%{transform:scale(.35);opacity:.5}
+  30%{transform:scale(.75);opacity:.25}
+  100%{transform:scale(1.35);opacity:0}
+}
+/* 十一、减少动画：关闭跟随/背景动态/高光，波纹缩短，保留基本 hover/active 反馈 */
+@media (prefers-reduced-motion: reduce){
+  #homeHalo{display:none}
+  .home-hero .cta .btn.primary::after{display:none}
+  .home-hero .cta .btn.primary:hover{transform:none}
+  .home-hero .cta .btn.primary:active{transform:scale(.98)}
+  .cta-ripple,.home-click-ring{animation-duration:200ms!important}
+}
 </style>
 </head>
 <body data-page-node-id="ZMzs3IsVIVz06lj73G0zz6">
@@ -877,17 +981,7 @@ details.pc[open] summary.pc-top{border-bottom:1px solid var(--c-border)}
   <div class="topbar" data-page-node-id="8YOIlTojUT57hq7bSAd8In">
     <div class="brand" data-page-node-id="vOym8kso0cxpJgmEYl2bcl">
       <span class="logo-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false">
-          <defs>
-            <linearGradient id="qlLogoGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#3B8FB4"/>
-              <stop offset="1" stop-color="#1F6B94"/>
-            </linearGradient>
-          </defs>
-          <rect width="24" height="24" rx="7" fill="url(#qlLogoGrad)"/>
-          <path d="M12 7.1c-1.5-1.4-3.6-2-6.8-2v9.9c3.2 0 5.3.6 6.8 2 1.5-1.4 3.6-2 6.8-2V5.1c-3.2 0-5.3.6-6.8 2z" fill="#ffffff" fill-opacity=".97"/>
-          <path d="M12 7.1v9.9" stroke="#2C7A9D" stroke-width="1.3" stroke-linecap="round"/>
-        </svg>
+        <img src="assets/logo.png" alt="" draggable="false" />
       </span>
       <span class="logo-wordmark">青蓝试讲</span>
     </div>
@@ -913,7 +1007,7 @@ details.pc[open] summary.pc-top{border-bottom:1px solid var(--c-border)}
 <div class="drawer-mask" id="drawerMask"></div>
 <aside class="drawer drawer-left" id="navDrawer" aria-label="训练导航">
   <div class="drawer-brand">
-    <div class="db-t"><span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false"><rect width="24" height="24" rx="7" fill="#ffffff" fill-opacity=".22"/><path d="M12 7.1c-1.5-1.4-3.6-2-6.8-2v9.9c3.2 0 5.3.6 6.8 2 1.5-1.4 3.6-2 6.8-2V5.1c-3.2 0-5.3.6-6.8 2z" fill="#ffffff" fill-opacity=".97"/></svg></span>训练闭环</div>
+    <div class="db-t"><span class="logo-mark" aria-hidden="true"><img src="assets/logo.png" alt="" draggable="false" /></span>训练闭环</div>
     <div class="db-d">从上传试讲稿到成长记录，五步打磨你的教学技能</div>
   </div>
   <div class="drawer-h">
@@ -1235,14 +1329,14 @@ APP.KB.studentQuestions = [
 
 /* 5. 课堂突发事件库 */
 APP.KB.classroomEvents = [
-  { id:'ev1', text:'电路接触不良，小灯泡不亮，学生起哄"老师，灯泡坏了！"', kind:'器材故障' },
-  { id:'ev2', text:'演示实验现象不明显，后排学生看不清，开始窃窃私语', kind:'演示失败' },
-  { id:'ev3', text:'有学生超纲追问："老师，为什么光速是宇宙最快速度？"', kind:'超纲追问' },
-  { id:'ev4', text:'学生上台演示，误把电压表并联错位置，读数异常', kind:'操作错误' },
-  { id:'ev5', text:'连续讲授超过三分钟，学生举手："老师，能不能让我们动手试试？"', kind:'讲授过长' },
-  { id:'ev6', text:'实验课前发现关键器材不足（电池电量耗尽、缺少滑动变阻器），学生眼巴巴等着开始', kind:'器材短缺' },
-  { id:'ev7', text:'学生抢着操作打翻了酒精灯（或热水杯），引发小范围骚动', kind:'操作事故' },
-  { id:'ev8', text:'演示实验现象与预期完全相反，学生起哄"老师，是不是做错了？"', kind:'现象异常' }
+  { id:'ev1', text:'电路接触不良，小灯泡不亮，学生起哄"老师，灯泡坏了！"', kind:'器材故障', eventClass:'器材', appliesTo:['电路','电学','电流','电压'], topicTags:['电路','灯泡','电学'], generic:false },
+  { id:'ev2', text:'演示实验现象不明显，后排学生看不清，开始窃窃私语', kind:'演示失败', eventClass:'演示', appliesTo:[], topicTags:[], generic:true },
+  { id:'ev3', text:'有学生超纲追问："老师，为什么光速是宇宙最快速度？"', kind:'超纲追问', eventClass:'追问', appliesTo:['光学','光','光速'], topicTags:['光','光速'], generic:false },
+  { id:'ev4', text:'学生上台演示，误把电压表并联错位置，读数异常', kind:'操作错误', eventClass:'操作', appliesTo:['电路','电学','电压'], topicTags:['电压表','电路'], generic:false },
+  { id:'ev5', text:'连续讲授超过三分钟，学生举手："老师，能不能让我们动手试试？"', kind:'讲授过长', eventClass:'调控', appliesTo:[], topicTags:[], generic:true },
+  { id:'ev6', text:'实验课前发现关键器材不足（电池电量耗尽、缺少滑动变阻器），学生眼巴巴等着开始', kind:'器材短缺', eventClass:'器材', appliesTo:['电路','电学'], topicTags:['电池','变阻器','电路'], generic:false },
+  { id:'ev7', text:'学生抢着操作打翻了酒精灯（或热水杯），引发小范围骚动', kind:'操作事故', eventClass:'事故', appliesTo:['化学','热学','实验'], topicTags:['酒精灯','实验'], generic:false },
+  { id:'ev8', text:'演示实验现象与预期完全相反，学生起哄"老师，是不是做错了？"', kind:'现象异常', eventClass:'演示', appliesTo:[], topicTags:[], generic:true }
 ];
 
 /* 5.5 训练焦点规划：诊断出的唯一优先目标 -> 学生模拟的针对性挑战 */
@@ -1306,16 +1400,19 @@ APP.KB.sampleLessons = [
 {
 id:'freefall', title:'自由落体运动', subject:'物理', grade:'高一',
 transcript:'[00:00] 同学们好，请坐。\n[00:05] 在生活当中我们经常看到物体下落，雨滴从空中落下，黄叶从树上飘落，瀑布飞流而下，雪花缓缓飘落。那我想问问大家，结合你的生活经验，重的物体和轻的物体，到底谁下落得更快？大家可以举手说一说你的想法。\n[00:22] 好，我听到有同学说重的落得快，石头肯定比树叶掉得快；也有同学有不一样的想法。相传伽利略曾经在比萨斜塔上做过著名的落体实验，今天咱们就一起来揭开物体下落的秘密。\n[00:38] 在上课之前呢我们先来做一个课堂小互动，大家看我手上这把尺子。我找两位同学上台来体验一下。一位同学捏住尺子顶端，另一位同学手放在尺子零刻度位置，手不要碰到尺子。上面同学松手，下面同学看到尺子下落立刻捏住尺子。\n[00:58] 大家想一想，为什么抓住尺子的位置，就能知道人的反应快慢？\n[01:05] （停顿十秒）\n[01:15] 没错！尺子下落的距离，就可以算出人的反应时间。就像奥运赛场上苏炳添，他的起跑反应时间仅仅 0.142 秒，反应十分迅速。那这把尺子下落的运动，就是我们今天要学习的 —— 自由落体运动。\n[01:32] 早在两千多年前，亚里士多德观察生活现象，得出结论：重的物体下落得快，轻的物体下落得慢。这个观点流传了上千年。但是后来，伽利略提出了完全不一样的看法，他认为：轻重不同的物体，下落的快慢是一样的。两位科学家跨越时空产生观点碰撞，那大家猜一猜，到底谁的观点才是正确的？\n[01:56] （停顿，学生自由发言，停顿 3 秒）\n[01:59] 口说无凭，我们通过三组小实验来探究验证。\n[02:05] 首先第一组，硬币和摊开的纸片，从同一高度由静止同时释放。大家睁大眼睛仔细观察，告诉我你们看到了什么现象？\n[02:16] （停顿 3 秒）\n[02:19] 对，硬币率先落地，纸片缓慢飘落。看上去好像印证了亚里士多德的观点，重的物体下落更快。\n[02:28] 第二组实验，我们把这张纸片揉成紧实的纸团，再和硬币从同一高度静止释放。大家继续观察！哎，什么现象？\n[02:38] （停顿等待学生回答，3 秒）\n[02:41] 没错，硬币和纸团几乎同时落地！同学们思考一下，纸片的质量有没有发生变化？\n[02:49] （提问学生，停顿 2 秒）\n[02:51] 对，质量没变，仅仅改变了形状，下落快慢就发生巨大改变。\n[02:58] 再来第三组，两张完全相同的纸，一张揉成纸团，一张保持平铺，同一高度同时释放。二者质量相等，大家看到什么？\n[03:08] （学生回答：纸团先落地，停顿 2 秒）\n[03:10] 质量完全相同的物体，下落快慢却不一样。那我要提问了：到底是什么因素在影响它们下落的快慢？大家前后同桌可以互相讨论 10 秒钟。\n[03:22] （讨论结束）好，哪位同学愿意分享你的结论？\n[03:28] （模拟学生作答，停顿 2 秒）非常好，请坐！就是空气阻力。平铺纸片受力面积大，空气阻力对它的影响非常明显；揉成纸团后，空气阻力的作用被大幅削弱。所以说，生活中我们看到重物落得快，并不是重力直接决定下落快慢，而是空气阻力带来的假象。\n[03:52] 伽利略还利用巧妙的逻辑推理反驳旧观点。我们假设亚里士多德 “重的物体下落更快” 是对的：大石头下落速度为 8，小石头下落速度为 4。如果把两块石头绑在一起，大家开动脑筋想一想，整体的下落速度会变成多少？\n[04:12] （留出思考时间，停顿 3 秒）\n[04:15] 按照亚里士多德的说法，总重量变大，整体下落速度应该大于 8；可是换个角度，小石头速度慢，会拖慢大石头，整体速度就应该介于 4 到 8 之间。同一个假设得到两个互相矛盾的结果，这就证明 “重的物体下落更快” 这个结论本身是站不住脚的。\n[04:38] 空气中我们始终摆脱不掉空气阻力，如果把空气全部抽走，结果又会如何？我们一起来观看真空实验视频。真空环境下释放保龄球和羽毛，一个很重，一个很轻。\n[04:54] （播放视频，停顿 4 秒）\n[04:58] （播放视频后提问）同学们看到什么现象？\n[05:03] （学生回答：同时落地，停顿 2 秒）\n[05:05] 完全正确！实验现象是保龄球与羽毛同时落地。由此我们得到结论：在没有空气阻力的时候，轻重不同的物体下落快慢相同。\n[05:18] 由此引出自由落体运动的定义：物体只在重力作用下，从静止开始下落的运动，叫做自由落体运动。\n[05:28] 那我来考考大家，自由落体运动需要满足哪两个条件？大家一起告诉我。\n[05:35] （齐答互动，停顿 2 秒）\n[05:37] 对！第一，只受重力；第二，初速度等于 0。\n[05:44] 自由落体是理想化物理模型。现实世界不存在绝对真空，那大家思考，现实当中什么情况，我们可以近似当成自由落体？\n[05:54] （抽问，停顿 2 秒）\n[05:56] 总结：当空气阻力远小于物体重力，阻力可以忽略不计的时候，就可以近似看作自由落体运动。那跳伞打开降落伞之后，能不能看成自由落体？\n[06:08] （学生齐答：不能，停顿 1 秒）\n[06:09] 没错，打开伞后阻力很大，不符合条件。\n[06:15] 知道了什么是自由落体，接下来我们研究它是什么性质的运动。物体下落，很明显是加速直线运动。那大家猜想一下，它是匀加速，还是越落加速度越大的变加速？\n[06:30] （学生自由说想法，停顿 3 秒）\n[06:33] 猜想需要实验来验证，我们使用打点计时器做实验。\n[06:39] 把打点计时器固定，纸带一端连接重物，另一端穿过打点计时器。手捏住纸带上端，记住操作要点：一定要先接通电源，再松开手，重物拖着纸带自由下落，纸带上就会打出一系列点迹。\n[06:58] 拿到纸带，我们有两种方法判断运动是不是匀加速直线运动。\n[07:04] 第一种方法，大家回忆前面学的，相邻相等时间内的位移有什么特点？\n[07:10] （提问，停顿 2 秒）\n[07:12] 对！如果相邻相等时间位移差 Δx 恒定，就是匀加速直线运动；数据点多的时候还可以用逐差法计算加速度。\n[07:23] 第二种，计算各个计数点瞬时速度，绘制 vt 图像，如果图像是一条倾斜直线，同样证明是匀加速直线运动。\n[07:34] 通过实验处理数据，我们得出实验结论：自由落体运动是初速度为零的匀加速直线运动，这个特殊加速度，我们称之为重力加速度 g。\n[07:48] 那我们回到上课一开始的反应尺小游戏。根据自由落体位移公式 ，我们变形得到。尺子下落高度 h，就可以算出下落时间，也就是人的反应时间。\n[08:06] 大家思考一个课后小任务：能不能直接把尺子上面的长度刻度，换算标注成时间刻度，做一把专属的反应时间测量尺？大家课后可以动手试一试。\n[08:18] 好了，我们一起来梳理本节课的重点，大家跟着我的提示一起回顾。\n[08:24] 第一，现实中物体下落快慢不同，罪魁祸首是什么？\n[08:29] （学生齐答：空气阻力，停顿 1 秒）\n[08:30] 第二，自由落体运动的定义和两个条件，它是理想化模型。\n[08:37] 第三，运动性质：初速度为 0 的匀加速直线运动。\n[08:44] 好，本节课的新知识我们就学到这里，课后完成对应习题，下课。\n[08:50] （停顿 2 秒，课堂结束）',
+transcriptAfter:'[00:00] 同学们好，请坐。\n[00:04] 今天我们从生活中最常见的现象开始：物体下落。\n[00:08] （停顿2秒）\n[00:10] 请大家先独立思考：重的物体和轻的物体，谁下落得更快？想好的同学请举手。\n[00:18] （停顿6秒，等待学生举手）\n[00:24] 好，我听到两种声音。请你说说你的理由。\n[00:29] （停顿4秒，倾听学生回答）\n[00:33] 很好，你的生活经验很敏锐。那我们用实验来验证。\n[00:38] 第一组：硬币和摊开的纸片，同一高度同时释放。大家仔细观察。\n[00:45] （停顿3秒）\n[00:48] 哪位同学来说说你看到的现象？\n[00:52] （停顿5秒）\n[00:57] 对，硬币先落地。这是不是说明重物落得快呢？先不急着下结论。\n[01:04] 第二组：把纸片揉成纸团，再和硬币同时释放。继续观察。\n[01:11] （停顿3秒）\n[01:14] 咦，这次几乎同时落地了。纸片的质量变了吗？没有。那是什么变了？\n[01:21] （停顿6秒，等待思考）\n[01:27] 对，是空气阻力变了。所以决定下落快慢的，不是重力本身，而是空气阻力。\n[01:35] 我们再用伽利略的逻辑推理来检验。\n[01:39] 假设重的下落快：大石头速度8，小石头速度4，绑在一起呢？\n[01:45] （停顿8秒，让学生讨论）\n[01:53] 按重量应大于8，按快慢应介于4到8，自相矛盾。所以旧观点不成立。\n[02:00] 由此我们得到：在没有空气阻力时，轻重物体下落快慢相同，这就是自由落体运动。\n[02:08] 它有两个条件：只受重力、初速度为0。请一位同学复述一遍。\n[02:15] （停顿5秒）\n[02:20] 非常好。今天作业是课后第1、2题。下课。',
 teacherComment:'本节课实验层次丰富，重视科学推理，但要注意逻辑推理部分语速偏快，建议给学生预留更多思考、消化的候答时间。'
 },
 {
 id:'doppler', title:'多普勒效应', subject:'物理', grade:'高二',
 transcript:'[00:00] 上课，同学们好，请坐。\n[00:06] 前面几次课呢我们已经学习了波的产生以及传播，那今天啊我们将从观测者的角度来学习一个非常有趣的物理现象。\n[00:16] （停顿 3 秒）\n[00:19] 那在学习之前呢，老师请大家先看一段视频，请大家关注一下火车驶过的过程中，除了音量大小之外，还有没有什么别的变化？\n[00:32] （板书，停顿 4 秒）\n[00:36] 好，有没有同学愿意分享一下你的发现？\n[00:41] 嗯，这位同学，哦，它的响度发生了变化，那其实响度就是我们的音量，对不对？这是因为我们的响度与人耳距离声源的远近是有关系的。\n[00:53] 还有没有什么别的变化呢？你说什么？哦，它的音调好像有些变化。 [01:02] 你的感觉是对的。\n[01:05] 当火车靠近的时候音调变高了，而远离的时候，音调变低了。诶，那在初中的时候我们就已经学习过了，音调其实是由声音的震动频率所决定的。频率高，音调就高，频率低，音调就低。所以这个现象的实质其实是，相对运动改变了我们接受到的波的频率，因此音调发生了变化。\n[01:28] 在 1842 年，奥地利物理学家多普勒带着女儿在铁道旁散步的时候，偶然发现了这个现象。\n[01:38] 于是就有了我们的多普勒效应。\n[01:42] 也就是当波源和观察者之间有相对运动时，观察者会感受到频率发生变化的现象。\n[01:51] 那定义中呢，有一个非常非常容易出错的点，也就是这里的频率。 [01:58] 这里的频率是指我们接受到的频率，同学们一定要与波源的频率区分开来，我们前面已经学习过，波源的频率是由波源本身的振动决定的，与其他条件无关。\n[02:12] 那么再回到这个定义，大家有没有发现这个定义是比较模糊的？因为它没有描述如何相对运动导致这个测得的频率是怎么变化的。所以接下来，我们来看一个视频，通过实验来一起探究。\n[02:28] （播放视频，停顿 5 秒）\n[02:33] 好，视频已经看完了，相信大家已经对于多普勒效应的定义有了更深入的理解。当波向我们靠近时，接受频率变高。而当波源远离我们时，接受频率变低。这就是多普勒效应。\n[02:48] 那其实啊，我们的生活中处处都是多普勒效应，马路边，校园里都有我们多普勒效应的身影。老师今天刚好带了一个音叉，接下来就给大家现实演示一下，大家更直观地感受这个现象。\n[03:03] （演示音叉，停顿 3 秒）\n[03:06] 大家有没有感觉到明显的音调变化呀，好，感兴趣的同学可以下课来讲台这边体验一下，我们回到课堂。\n[03:15] 那到底为什么会出现这样的现象呢？\n[03:19] 我们把 “波” 想象成一群整齐跑步的学生，把 “观察者” 当成站在一旁的体育老师。当观察者站着不动，队伍以固定速度朝他走来， 10 秒内，有 7 个人从他身边经过，过人频率是 7 人/10s；当观察者迎着队伍走，和队伍相向而行， 同样 10 秒内，有 10 个人从他身边经过，过人频率变成 10 人/ 10s，频率变高了；而当观察者和队伍同向而行： 过人频率又变成低了。\n[03:48] 现在我们把这些跑步的学生，对应成一个个波峰，刚才的过人频率，现在对应声波的频率，而整个队伍呢，其实就是波源。本来当观察者静止的时候，10 秒内会有 7 个波峰经过观察者，而当观察者逆着波源行走时，相同时间内通过观察者的波峰数量就变多了，这个时候呢声波频率也变高了。那其实啊，这就是我们相对运动会改变接收频率的原因。\n[04:14] 由此，我们就可以总结出关键的结论：\n[04:18] 1. 当波源和观察者都静止时，观察者在相同时间里接收到的波的个数，等于波源发出的波的个数。\n[04:27] 也就是接收频率等于发出频率。\n[04:31] 2. 当波源静止，观察者靠近波源时，单位时间内接收到的波峰个数变多了。\n[04:40] 此时，接收频率？大于！发出频率。\n[04:46] 3. 当观察者远离波源时呢？大家一起说！对，接收频率小于发出频率，所以音调降低了。\n[04:56] 好，我们刚才总共讨论了这五种情况，我们现在来总结一下，运动和频率究竟有什么样的关系呢？大家觉得可以分成几类？对，没错，可以分成三类。\n[05:09] 我们令波源频率为 f，接受频率为 f′。波源与观察者相对静止时，f＝f′；相互靠近时，f＜f′；相互远离时，f＞f′。\n[05:22] 那本节课呢我们主要是以声波为例，给大家讲解了我们的多普勒效应，但是大家要注意这个规律并不是声波的专属现象，而是所有波的共同规律。比如说光波，电磁波等等。\n[05:36] 学习物理这门学科呀，我们不仅要学习原理，更应该明白这些原理能解决什么问题，创造什么价值？而多普勒效应的应用，早就渗透到了我们生活的方方面面。交通里的雷达、超声波测速，利用的就是我们声波的多普勒效应；医学上，医生通过反射波的频率变化来判断血流速度，给诊断提供精准依据；而天文学里，科学家利用光的多普勒效应，观测星系的运动，分析它们是远离还是靠近我们，以此探索宇宙的起源和演化。\n[06:18] 同学们，多普勒效应从一个路边的小观察，变成了交通，医学，天文等等领域的核心技术。物理从来都不是书本上枯燥的知识，它源于生活，更实实在在地服务于国家和人民。从交通平安到医疗健康，从地面科技到仰望星空，基础物理规律看似抽象，却是我们破解技术的关键，学好基础物理就是为国家科技发展蓄力。\n[06:38] （停顿 3 秒，课堂结束）',
+transcriptAfter:'[00:00] 上课，同学们好，请坐。\n[00:05] 先听一段声音：火车驶过时的鸣笛声。\n[00:09] （播放音频，停顿5秒）\n[00:14] 大家听到了什么变化？\n[00:18] （停顿5秒，等待回答）\n[00:23] 对，音调变了。火车靠近时音调变高，远离时变低。\n[00:29] 音调由什么决定？由频率决定。这里我要特别强调一个最容易混淆的点。\n[00:36] （板书，停顿3秒）\n[00:39] 这里变化的频率，是观察者接收到的频率，不是波源本身的频率。\n[00:46] 波源频率由波源自身振动决定，与观察者怎么动无关。请大家把这句话记在笔记本上。\n[00:54] （停顿6秒，让学生记录）\n[01:00] 好，那为什么接收频率会变？我们用跑步的学生来类比。\n[01:06] 观察者迎着波源走，单位时间通过的波峰更多，接收频率就变高。\n[01:13] （停顿4秒）\n[01:17] 总结三种情况：相对静止时接收频率等于波源频率；靠近时大于；远离时小于。\n[01:25] 谁来完整说一遍这三种关系？\n[01:30] （停顿6秒）\n[01:36] 非常准确。最后提醒：多普勒效应是所有波的共同规律，光波、电磁波都适用。\n[01:44] 今天的作业：举一个生活中多普勒效应的例子并说明频率如何变化。下课。',
 teacherComment:'本节课善于借助类比、演示与习题落实概念，但需要着重强化区分波源固有频率与接收频率这一学生最容易混淆的核心易错点。'
 },
 {
 id:'mechanical', title:'机械能守恒定律', subject:'物理', grade:'高一',
 transcript:'[00:00] 同学们，上课，我们今天要学习的，就是第八章第四节机械能守恒定律。\n[00:07] （切换 PPT，停顿 2 秒）\n[00:09] 那在正式上课之前我们先带着这三个问题来看一个有意思的视频。\n[00:17] （板书，播放视频，停顿 4 秒）\n[00:21] 好，为什么这个健身器材不会撞到视频中的人呢？答案其实就藏在我们今天这堂课中。\n[00:29] （切换 PPT，停顿 2 秒）\n[00:31] 那首先，我们先来一起回顾一下前面我们所学到的伽利略的理想斜面实验。\n[00:38] （板书，停顿 3 秒）\n[00:41] 嗯好，刚才同学们已经回顾了伽利略的理想斜面实验，我们知道在忽略了空气阻力以及摩擦力的前提下，小球如果从 a 点释放，那它一定能够到达与 a 点等高的 c 点。\n[00:54] （切换 PPT，停顿 2 秒）\n[00:56] 那老师现在想来问大家一个问题，在小球运动的过程中，什么样的物理量发生了改变呢？ [01:04] 哪位同学来回答一下？好，小杨你来说。非常好，请坐。\n[01:11] 在这个过程中，我们的速度与高度发生了改变。\n[01:16] （切换 PPT，停顿 2 秒）\n[01:18] 我们前面已经学习过了重力势能以及动能的知识，我们知道这里的速度就对应着动能的改变，高度对应着重力势能的改变。\n[01:28] 诶，那我们今天要研究的呢就是某种能量的守恒对不对？\n[01:33] 我们来试着分析一下 ABC 这三个点（手部动作），他们的动能和重力势能是一个什么样的情况。\n[01:41] 首先，在 a 点我们的小球无初速度释放，所以它的动能为零。我们假设这个 A 点距离地面的高度都为 H，所以它的势能就等于 mgh。\n[01:53] 那好，我们再来分析一下 b 点。这就需要结合我们学过的动能定理的知识了，在这个过程中呢我们忽略了一切的摩擦力和阻力，也就是说这个过程中只有重力做功。而小球从 a 点运动到 b 点，所以重力做功的大小就等于 mgh，等于末动能减去初动能。那我们就可以得到在 b 点它的重力势能为零，而动能大小等于 mgh。好，那现在大家跟我一起说出来 c 点的重力势能和动能的情况。重力势能大小为 mgh，而动能大小等于零。\n[02:27] 大家有没有发现什么神奇的事情？\n[02:31] （切换 PPT，停顿 2 秒）\n[02:33] 在这个过程中，ABC 三个点的重力势能与动能之和都为 mgh。\n[02:39] 这会不会就是我们今天要找的那个守恒量呢？\n[02:44] （切换 PPT，停顿 2 秒）\n[02:46] 我们再接着看第二个情境，试着分析一下这个情境中会不会存在同样的规律。假设这是一个光滑的平面，然后呢这里是一个弹簧，弹簧右边连接着一个小球，这一点就是原点 o，然后老师现在把这个球拉到这里，那么小球就会受到弹力的作用往回拉，对不对？现在我们在中间任取 A，B 两个点，也像刚才那样来分析。\n[03:09] （切换 PPT，停顿 2 秒）\n[03:11] 那么根据动能定理的知识，在这个过程中弹力做功就等于末动能减去初动能，而这个弹力做功的大小，就等于 A 点的弹性势能减去 B 点的弹性势能。根据这两个关系式，我们是不是发现了和刚才一模一样的结论呀？也就是说 a 点和 B 点的弹性势能和动能之和是相等的。\n[03:34] （停顿 2 秒）\n[03:36] 好，现在来总结一下刚才我们讨论的那两个小实验。在第一个情境中，我们忽略了摩擦力与阻力，重力势能和动能通过重力做功进行转化。那第二个模型当中，我们也是同样的忽略了弹力之外的力的影响，所以在这个过程中只有弹力作功，使动能和弹性势能之间发生了转化。\n[03:56] 那学到这里，有没有同学愿意来总结一下你发现的规律呢？ [04:02] （切换 PPT，停顿 2 秒）\n [04:04] 好，那个靠窗的同学你来说。哦，在这个过程中，我们的动能和势能之和都没有发生变化，非常好，请坐。\n[04:14] 是的，这个动能与势能之和就是我们今天要找的守恒量。在这里我们就给出了机械能的定义。\n[04:22] （板书，停顿 3 秒）\n[04:25] 机械能就是物体动能和势能之和，大家需要格外注意的一点就是这里的势能只包括重力势能和弹性势能，那在后面我们还会学习到电势能，那这些就不包含在我们机械能的范围之内了。\n[04:40] 好，同学们，我们今天这堂课学习的主题叫做机械能守恒定律，顾名思义就是说在某个条件下，机械能的大小是不发生变化的。\n[04:51] （切换 PPT，停顿 2 秒）\n[04:53] 那同学们想一想，机械能守恒的条件是什么呢？大家可以小组讨论一下。\n[05:00] （板书，小组讨论，停顿 4 秒）\n[05:04] 好，时间差不多了，哪个小组派一个代表起来说一下？这位同学。哦，我们要忽略一切的摩擦力和空气阻力，说的很接近，但是不完全正确。再想想，好，这个问题有一点点难。我们来看一下，在第一个情境中，我们忽略一切摩擦力和空气阻力，导致了一个什么样的结果？在这个过程中只有重力做功，对不对？那第二个情境中呢？是的，只有弹力做功。也就是说你刚才说到的那个忽略一切摩擦力和空气阻力的条件就是为了导向只有重力做功或者只有弹力做功，这种情况。\n[05:36] （切换 PPT，停顿 2 秒）\n[05:38] 我们机械能守恒的条件其实就是系统内只有重力或者弹力做功，其他力不做功或者做功的代数和为零。\n[05:48] （切换 PPT，停顿 2 秒）\n[05:50] 机械能守恒定律就是在只有重力或者弹力做功的物体系统内，动能和势能可以相互转化，但机械能总量保持不变。\n[05:59] 那么接下来我们来总结回顾一下前面我们学习到的内容。我们重点来看屏幕最右边的这一部分，我们通过动能定理和功能关系，再加上除了重力与弹力之外的力做功代数和为零的这样一个条件，就可以推导出机械能守恒定律。\n[06:16] 那么现在，我们回到今天最开始的这三个问题。相信大家心中已经有了答案。\n[06:22] （切换 PPT，停顿 2 秒）\n[06:24] 好，那么最后老师这里给大家准备了一个课后思考题，请大家分析一下，在以下中国制造中，机械能是否守恒？哪些能量之间发生了转化呢？同学们从我们公园里的太空漫步器材，到福建舰的电磁弹射器，再到白鹤滩水电站的水力发电系统，这些小到基础设施，大到国之重器的设计都与我们的机械能守恒定律息息相关。物理规律看似抽象，却是工程师们破解技术的关键。学好基础物理就是为国家科技发展蓄力。\n[06:52] 我的试讲到此结束，谢谢大家！\n[06:55] （停顿 3 秒，试讲结束）',
+transcriptAfter:'[00:00] 同学们，上课。今天学习机械能守恒定律。\n[00:06] 先看一个视频：健身器材为什么不会撞到人？答案藏在今天的课里。\n[00:12] （播放视频，停顿5秒）\n[00:17] 我们先回顾伽利略理想斜面实验。\n[00:21] （板书，停顿3秒）\n[00:24] 小球从A点释放，忽略摩擦和阻力，会到达等高的C点。\n[00:30] 在小球运动过程中，动能和重力势能在转化，但它们的总和不变。\n[00:37] 这个"总和不变"就是机械能守恒。\n[00:41] 那机械能守恒的条件是什么？这是今天最重要、也最容易错的地方。\n[00:48] （停顿4秒）\n[00:52] 有同学说"不受其他力"。请听清楚：不是不受其他力，而是其他力不做功。\n[00:59] （板书，停顿4秒）\n[01:03] 比如小球还受重力之外的绳子拉力，但只要这个拉力始终与运动方向垂直、不做功，机械能依然守恒。\n[01:12] 所以准确表述是：系统内只有重力或弹力做功，其他力不做功或做功代数和为零。\n[01:21] 请大家区分清楚"不受其他力"和"其他力不做功"这两个说法。\n[01:27] （停顿5秒）\n[01:32] 谁来举一个"有力但机械能守恒"的例子？\n[01:37] （停顿6秒）\n[01:43] 很好，单摆摆动时绳子有拉力，但拉力不做功，机械能守恒。\n[01:50] 今天作业：判断太空漫步机、电磁弹射器、水电站中机械能是否守恒。下课。',
 teacherComment:'本节课从实验情境层层推导定律，重视条件辨析，需要强化区分 “不受其他力” 和 “其他力不做功” 这一学生高频易错点。'
 }
 ];
@@ -1329,6 +1426,27 @@ APP.KB.getSampleLesson = function(id){
   var arr=APP.KB.sampleLessons||[];
   for(var i=0;i<arr.length;i++){ if(arr[i].id===id) return arr[i]; }
   return APP.KB.sampleLesson;
+};
+/* 7.3 重讲改进样例库（R7+R12）：按当前课题返回匹配的"改进后"样例；无匹配返回 null，绝不降级到其它课题 */
+APP.KB.getReteachSample = function(lessonContext){
+  var topic = lessonContext ? (lessonContext.canonicalTopic || lessonContext.title || '') : '';
+  if(!topic) return null;
+  /* 1) demo 课题（牛顿第一定律） */
+  var demoTitle = (APP.KB.sampleLesson && APP.KB.sampleLesson.title) || '';
+  if(demoTitle && topic === demoTitle){
+    return { id:'demo', title:APP.KB.sampleLesson.title, subject:APP.KB.sampleLesson.subject, grade:APP.KB.sampleLesson.grade,
+             transcript:APP.KB.sampleLesson.transcriptAfter, teacherComment:'' };
+  }
+  /* 2) 真实样例库：按标题精确匹配，且有 transcriptAfter 才返回（数据驱动） */
+  var arr = APP.KB.sampleLessons || [];
+  for(var i=0;i<arr.length;i++){
+    var s = arr[i];
+    if(s.title === topic && typeof s.transcriptAfter==='string' && s.transcriptAfter.length>0){
+      return { id:s.id, title:s.title, subject:s.subject, grade:s.grade,
+               transcript:s.transcriptAfter, teacherComment:s.teacherComment||'' };
+    }
+  }
+  return null;
 };
 
 /* 7.5 课题索引：课题 → 相关迷思 topic + 题库 topic 别名（实现"提问必须与当前课题相关"） */
@@ -1392,12 +1510,262 @@ APP.KB.lessonQuestions = [
 /* experiment 实验操作问题（小陈主导） */
 { id:'n1_010', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'牛顿第一定律', question_type:'experiment', question:"老师，做斜面小车实验的时候，为什么要让小车每次都从同一高度滑下？" },
 { id:'n1_011', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'牛顿第一定律', question_type:'experiment', question:"老师，毛巾和木板的粗糙程度差别不大的话，实验结论还会明显吗？" },
-{ id:'n1_012', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'牛顿第一定律', question_type:'experiment', question:"老师，'绝对光滑'现实中根本做不到，伽利略理想实验是不是只能靠脑子推理？" }
+{ id:'n1_012', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'牛顿第一定律', question_type:'experiment', question:"老师，'绝对光滑'现实中根本做不到，伽利略理想实验是不是只能靠脑子推理？" },
+/* ---- 自由落体运动专属题库（4 人设 × 2 题） ---- */
+{ id:'ff_001', persona_id:'xiaolin', persona_name:'小林', subject:'物理', topic:'自由落体运动', question_type:'concept_confusion', question:"老师，自由落体运动一定要从静止开始吗？竖直向下抛出去的物体还算自由落体吗？" },
+{ id:'ff_002', persona_id:'xiaolin', persona_name:'小林', subject:'物理', topic:'自由落体运动', question_type:'concept_confusion', question:"老师，自由落体只受重力，可现实里下落的物体都受空气阻力，是不是都不算自由落体了？" },
+{ id:'ff_003', persona_id:'xiaoli', persona_name:'小李', subject:'物理', topic:'自由落体运动', question_type:'life_intuition', question:"老师，树叶和石头同时落下，石头先落地，这不就说明重的物体落得快吗？" },
+{ id:'ff_004', persona_id:'xiaoli', persona_name:'小李', subject:'物理', topic:'自由落体运动', question_type:'life_intuition', question:"老师，跳伞运动员打开降落伞后缓缓落下，是不是因为他的重力变小了？" },
+{ id:'ff_005', persona_id:'xiaowang', persona_name:'小王', subject:'物理', topic:'自由落体运动', question_type:'extension', question:"老师，重力加速度 g 是恒定值吗？在地球不同纬度 g 会不会不一样？" },
+{ id:'ff_006', persona_id:'xiaowang', persona_name:'小王', subject:'物理', topic:'自由落体运动', question_type:'extension', question:"老师，如果空气阻力不能忽略，物体下落的加速度还是 g 吗？会怎么变化？" },
+{ id:'ff_007', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'自由落体运动', question_type:'experiment', question:"老师，用打点计时器测重力加速度，为什么要先接通电源再释放纸带？" },
+{ id:'ff_008', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'自由落体运动', question_type:'experiment', question:"老师，逐差法算加速度时，为什么不能只用相邻两段位移，而要隔段相减？" },
+/* ---- 多普勒效应专属题库（4 人设 × 2 题） ---- */
+{ id:'dp_001', persona_id:'xiaolin', persona_name:'小林', subject:'物理', topic:'多普勒效应', question_type:'concept_confusion', question:"老师，多普勒效应里变的到底是波源频率还是接收频率？我一直分不清。" },
+{ id:'dp_002', persona_id:'xiaolin', persona_name:'小林', subject:'物理', topic:'多普勒效应', question_type:'concept_confusion', question:"老师，如果波源和观察者都静止，还会不会发生多普勒效应？" },
+{ id:'dp_003', persona_id:'xiaoli', persona_name:'小李', subject:'物理', topic:'多普勒效应', question_type:'life_intuition', question:"老师，救护车开过我身边时鸣笛声一会儿高一会儿低，是不是它喇叭本身的声音变了？" },
+{ id:'dp_004', persona_id:'xiaoli', persona_name:'小李', subject:'物理', topic:'多普勒效应', question_type:'life_intuition', question:"老师，赛车呼啸而过时声音先变尖再变低，是不是因为车离我远近不同？" },
+{ id:'dp_005', persona_id:'xiaowang', persona_name:'小王', subject:'物理', topic:'多普勒效应', question_type:'extension', question:"老师，波源靠近观察者和观察者靠近波源，接收频率的变化一样吗？" },
+{ id:'dp_006', persona_id:'xiaowang', persona_name:'小王', subject:'物理', topic:'多普勒效应', question_type:'extension', question:"老师，光的多普勒效应和声波的多普勒效应在原理上有什么不同？" },
+{ id:'dp_007', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'多普勒效应', question_type:'experiment', question:"老师，用音叉演示多普勒效应时，为什么要把音叉挥动起来才能听出音调变化？" },
+{ id:'dp_008', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'多普勒效应', question_type:'experiment', question:"老师，实验里观察者静止、音叉靠近，和音叉静止、观察者靠近，测到的频率变化会一样吗？" },
+/* ---- 机械能守恒定律专属题库（4 人设 × 2 题） ---- */
+{ id:'mc_001', persona_id:'xiaolin', persona_name:'小林', subject:'物理', topic:'机械能守恒定律', question_type:'concept_confusion', question:"老师，机械能守恒的条件到底是'不受其他力'还是'其他力不做功'？这俩有什么区别？" },
+{ id:'mc_002', persona_id:'xiaolin', persona_name:'小林', subject:'物理', topic:'机械能守恒定律', question_type:'concept_confusion', question:"老师，机械能守恒的时候，物体的动能和势能是不是都不变？" },
+{ id:'mc_003', persona_id:'xiaoli', persona_name:'小李', subject:'物理', topic:'机械能守恒定律', question_type:'life_intuition', question:"老师，荡秋千最后会停下来，是不是说明机械能不守恒？那能量去哪了？" },
+{ id:'mc_004', persona_id:'xiaoli', persona_name:'小李', subject:'物理', topic:'机械能守恒定律', question_type:'life_intuition', question:"老师，过山车从高处冲下来速度越来越快，是不是重力在做功让机械能变大了？" },
+{ id:'mc_005', persona_id:'xiaowang', persona_name:'小王', subject:'物理', topic:'机械能守恒定律', question_type:'extension', question:"老师，机械能守恒定律和动能定理是什么关系？能不能用动能定理推导出来？" },
+{ id:'mc_006', persona_id:'xiaowang', persona_name:'小王', subject:'物理', topic:'机械能守恒定律', question_type:'extension', question:"老师，如果有摩擦力做功，机械能减少的那部分能量去哪了？" },
+{ id:'mc_007', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'机械能守恒定律', question_type:'experiment', question:"老师，伽利略理想斜面实验里，为什么小球能到达与释放点等高的位置？" },
+{ id:'mc_008', persona_id:'xiaochen', persona_name:'小陈', subject:'物理', topic:'机械能守恒定律', question_type:'experiment', question:"老师，验证机械能守恒的实验中，为什么重物下落时不能让纸带晃动？" }
 ];
 
 /* 合并全部题库（基础题库 + 课题专属题库） */
 APP.KB.allQuestions = function(){
 return (APP.KB.studentQuestions||[]).concat(APP.KB.lessonQuestions||[]);
+};
+
+/* ===================== #region L1.5 LessonContext 单一事实源 =====================
+ * 课程上下文的唯一事实源：从当前 lesson 元数据生成，统一供载入/模拟/注入/分析读取。
+ * 优先级：topicIndex 命中 → 直接用索引（canonicalTopic = 索引键）；未命中 → 标题即规范课题，
+ *         仅用「已知题库关键词池」做轻量抽取（aliases/keyConcepts），绝不凭空发明课程主题。
+ */
+APP.LessonContext = {
+  _knownTopics: null,
+  /* 关键词池：只来自已知课题（题库 topic / 样例标题 / topicIndex 键），杜绝发明课题 */
+  _knownTopicsPool: function(){
+    if(this._knownTopics) return this._knownTopics;
+    var set={}, i;
+    (APP.KB.studentQuestions||[]).forEach(function(q){ if(q.topic) set[q.topic]=1; });
+    (APP.KB.lessonQuestions||[]).forEach(function(q){ if(q.topic) set[q.topic]=1; });
+    (APP.KB.sampleLessons||[]).forEach(function(l){ if(l.title) set[l.title]=1; });
+    Object.keys(APP.KB.topicIndex||{}).forEach(function(k){ set[k]=1; });
+    this._knownTopics = Object.keys(set);
+    return this._knownTopics;
+  },
+  /* 标题 + 转写文本在已知池内做包含匹配，返回命中关键词（轻量，不发明） */
+  _extract: function(title, raw){
+    var text = String(title||'').trim() + '\n' + String(raw||'').slice(0, 4000);
+    var hits = [], pool = this._knownTopicsPool(), i;
+    for(i=0;i<pool.length;i++){
+      var k = pool[i];
+      if(k && k.length>=2 && text.indexOf(k)>=0 && hits.indexOf(k)<0) hits.push(k);
+    }
+    return hits;
+  },
+  deepCopy: function(obj){
+    if(obj==null) return null;
+    try{ return JSON.parse(JSON.stringify(obj)); }catch(e){ return null; }
+  },
+  /* 从 lesson 元数据构建 lessonContext */
+  build: function(lesson){
+    lesson = lesson || {};
+    var title = String(lesson.title||'').trim();
+    var subject = lesson.subject || '物理';
+    var grade = lesson.grade || '';
+    var raw = String(lesson.raw||'');
+    var source = lesson.source || 'custom';
+
+    /* 1) topicIndex 命中：优先使用 */
+    var idxKey=null, cfg=null, keys=Object.keys(APP.KB.topicIndex||{}), i;
+    for(i=0;i<keys.length;i++){
+      var k=keys[i];
+      if(title.indexOf(k)>=0 || k.indexOf(title)>=0){ idxKey=k; cfg=APP.KB.topicIndex[k]; break; }
+    }
+
+    var canonicalTopic, aliases, keyConcepts, misconceptionTopics, questionPoolId, eventProfile;
+    if(cfg){
+      canonicalTopic = idxKey;                       /* topicIndex 键即规范课题 */
+      aliases = (cfg.qAliases||[]).slice();
+      keyConcepts = (cfg.topics||[]).slice();
+      misconceptionTopics = (cfg.topics||[]).slice(); /* 迷思主题与关键概念同源（供后续过滤） */
+      questionPoolId = 'lesson-' + idxKey;           /* 课题专属题库标识（lessonQuestions 按课题过滤） */
+      eventProfile = [];
+    } else {
+      canonicalTopic = title;                        /* 未命中：标题即规范课题，不发明 */
+      var hits = this._extract(title, raw);
+      aliases = hits.filter(function(x){ return x!==title; });
+      keyConcepts = hits.slice();
+      misconceptionTopics = [];                      /* 无法确定迷思主题时不发明 */
+      questionPoolId = 'generic';
+      eventProfile = [];
+    }
+
+    var lessonId = lesson.lessonId || lesson.sampleId
+      || ('lc-' + source + '-' + (title ? title.replace(/[^\u4e00-\u9fa5A-Za-z0-9]+/g,'').slice(0,12) : 'custom'));
+
+    return {
+      lessonId: lessonId,
+      title: title,
+      subject: subject,
+      grade: grade,
+      canonicalTopic: canonicalTopic,
+      aliases: aliases,
+      keyConcepts: keyConcepts,
+      misconceptionTopics: misconceptionTopics,
+      questionPoolId: questionPoolId,
+      eventProfile: eventProfile,
+      source: source,
+      raw: raw,
+      parsed: lesson.parsed || null
+    };
+  },
+  /* 各载入流程统一入口：构建并写入 state，同时使「旧课题 sim 会话」自动失效 */
+  apply: function(lesson){
+    var old = APP.state.context.lessonContext;
+    var ctx = this.build(lesson);
+    APP.state.context.lessonContext = ctx;
+    if(APP.state.context.sim){
+      var oldId = old && old.lessonId;
+      if(!oldId || oldId !== ctx.lessonId){
+        APP.state.context.sim = null;        /* 切换课题：旧 sim 自动失效 */
+        APP.state.context.simDraft = null;
+      }
+    }
+    return ctx;
+  },
+  /* 当前课题（优先 sim.lessonContext，其次 state.lessonContext） */
+  topicOf: function(sim){
+    var lc = (sim && sim.lessonContext) || (APP.state.context && APP.state.context.lessonContext) || null;
+    return lc ? (lc.canonicalTopic || lc.title || '') : '';
+  },
+  /* 旧 session 恢复：缺 lessonContext 时从 context.lesson 重建（绝不回退全局 sampleLesson） */
+  ensure: function(){
+    var ctx = APP.state.context;
+    if(!ctx.lessonContext && ctx.lesson){
+      ctx.lessonContext = this.build(ctx.lesson);
+    }
+    return ctx.lessonContext || null;
+  }
+};
+
+/* ===================== #region L1.6 TopicRetriever 课题相关检索层 =====================
+ * 轻量检索层：只返回与当前 lessonContext 相关的问题/迷思/突发事件。
+ * 优先级：1) lessonQuestions（canonicalTopic/aliases 精确或高置信）2) topicIndex topics/qAliases
+ *         3) 无匹配时才允许安全通用行为，绝不随机跨课题抽题。
+ */
+APP.TopicRetriever = {
+  /* 字符串对任一池的包含匹配（双向） */
+  _matchesAny: function(value, pools){
+    value = String(value==null?'':value).trim();
+    if(!value) return false;
+    pools = pools || [];
+    for(var i=0;i<pools.length;i++){
+      var k = String(pools[i]==null?'':pools[i]).trim();
+      if(k && (value.indexOf(k)>=0 || k.indexOf(value)>=0)) return true;
+    }
+    return false;
+  },
+  /* 题目/意图允许主题池：canonicalTopic + title + aliases + keyConcepts */
+  _qPools: function(lc){ return (lc.aliases||[]).concat(lc.keyConcepts||[]).concat([lc.canonicalTopic, lc.title]); },
+  /* 迷思允许主题池：misconceptionTopics */
+  _mPools: function(lc){ return lc.misconceptionTopics || []; },
+
+  /* 相关性判定：题目/迷思/事件/意图 统一入口 */
+  isRelevant: function(item, lc){
+    if(!item) return false;
+    if(!lc) return true;                       /* 无课题上下文：不做拦截（兼容无 context 的单元测试/旧状态） */
+    if(item.safe_generic) return true;
+    var self = this, qp = this._qPools(lc), mp = this._mPools(lc);
+    /* 事件类：kind 且无 question_type/term/detectTerms */
+    if(item.kind !== undefined && !item.question_type && item.term === undefined && item.detectTerms === undefined){
+      if(item.generic) return true;
+      var tags = (item.topicTags||[]).concat(item.appliesTo||[]);
+      if(!tags.length) return false;           /* 无法判断适用范围 → 默认不相关（generic=false） */
+      return tags.some(function(t){ return self._matchesAny(t, qp.concat(mp)); });
+    }
+    /* 迷思类：term/detectTerms/studentLine 或 decide 第2步 misconception 标记 */
+    if(item.misconception || item.term !== undefined || item.detectTerms !== undefined || item.studentLine !== undefined){
+      var mt = item.topic || '';
+      return this._matchesAny(mt, mp) || (item.term ? mp.indexOf(item.term)>=0 : false);
+    }
+    /* 题目/意图：topic 命中 canonicalTopic/aliases/keyConcepts */
+    return this._matchesAny(item.topic, qp);
+  },
+
+  /* 课题相关问题（按 questionType 过滤 + 相关性过滤，persona 用于同题型内优先其本人题） */
+  findQuestions: function(lc, persona, qtype){
+    if(!lc) return [];
+    var self = this, out = [];
+    function collect(q){
+      if(!q || !q.question) return;
+      if(qtype && q.question_type !== qtype) return;
+      if(!self.isRelevant(q, lc)) return;
+      out.push(q);
+    }
+    /* 1) lessonQuestions 优先（canonicalTopic/aliases 高置信匹配） */
+    (APP.KB.lessonQuestions||[]).forEach(collect);
+    /* 2) topicIndex topics/qAliases 命中的通用题库题 */
+    (APP.KB.studentQuestions||[]).forEach(collect);
+    /* 人格倾向：persona 本人题优先 */
+    if(persona && persona.id){
+      out.sort(function(a,b){ return (a.persona_id===persona.id?0:1) - (b.persona_id===persona.id?0:1); });
+    }
+    return out;
+  },
+
+  /* 课题相关迷思概念（仅 misconceptionTopics 内） */
+  findMisconceptions: function(lc){
+    if(!lc) return [];
+    var mp = this._mPools(lc);
+    if(!mp.length) return [];
+    var all = (APP.KB.physicsMisconceptions||[]).concat(APP.KB.miscMisconceptions||[]);
+    var out = [];
+    for(var i=0;i<all.length;i++){ if(mp.indexOf(all[i].topic)>=0) out.push(all[i]); }
+    return out;
+  },
+
+  /* 课题相关突发事件（generic=true 或明确匹配；focus 相关能力事件优先） */
+  findEvents: function(lc, focus){
+    if(!lc) return [];
+    var out = (APP.KB.classroomEvents||[]).filter(function(e){ return APP.TopicRetriever.isRelevant(e, lc); });
+    if(focus){
+      var plan = APP.KB.focusPlan && APP.KB.focusPlan[focus.dimensionId];
+      var keys = (plan && plan.eventKeys) || [];
+      if(keys.length){
+        out.sort(function(a,b){
+          var ha = keys.some(function(k){ return a.kind.indexOf(k)>=0; });
+          var hb = keys.some(function(k){ return b.kind.indexOf(k)>=0; });
+          return (hb?1:0)-(ha?1:0);
+        });
+      }
+    }
+    return out;
+  },
+
+  /* 安全通用意图（非知识型学生反应） */
+  safeIntent: function(lc, reason){
+    return { behavior:'respond', question_type:null, state:'attentive', question:null,
+             topic:(lc ? (lc.canonicalTopic||lc.title) : '')||'', reason:reason||'课题相关题面缺失',
+             text:'', sys:null, safe_generic:true };
+  },
+
+  /* 硬门：任何发送给表达层/云端的 intent 若与课题无关，降级为安全通用意图 */
+  gate: function(intent, lc){
+    if(!intent) return null;
+    if(this.isRelevant(intent, lc)) return intent;
+    return this.safeIntent(lc, '硬门拦截：检测到与当前课题无关的内容');
+  }
 };
 
 /* ===================== #region L2 存储 Store ===================== */
@@ -1435,8 +1803,17 @@ APP.Store = {
 };
 APP.state = APP.Store.load();
 if(!APP.state.context) APP.state.context={};
-/* 启动快照：内联测试 IIFE 会整体替换 APP.state 并覆写 localStorage，初始化尾部据此恢复用户真实状态 */
+/* 旧 session 恢复：缺 lessonContext 时从 context.lesson 重建（R1 单一事实源） */
+APP.LessonContext.ensure();
+/* 启动快照：内联测试 IIFE 会整体替换 APP.state 并覆写 localStorage，初始化尾部据此恢复 */
 APP.__bootState=JSON.parse(JSON.stringify(APP.state));
+/* 1b：进入页面回到首页（仅重置 currentStep，保留 steps 与 context），
+ *     使首页仍显示「能力概览 / 继续训练」，不清除用户已完成的诊断结果。
+ *     重置须在首次 render 之前：否则 render 会按残留步骤（如 simulate）渲染首页以外的视图。 */
+(function(){
+  APP.state.meta.currentStep='home';
+  APP.Store.save(APP.state);
+})();
 
 APP.Steps = {
   get:function(id){ return APP.state.steps[id]; },
@@ -2014,37 +2391,74 @@ APP.StudentStateMachine = {
     return keys[keys.length-1];
   },
 
-  /* 从题库按 question_type 抽题（persona_id 仅作来源标注，不作绑定键） */
-  pickQuestion: function(sim, qtype){
-    var pool = APP.KB.studentQuestions.filter(function(q){ return q.question_type===qtype; });
-    if(!pool.length) pool = APP.KB.studentQuestions;
+  /* 从课题相关题库按 question_type 抽题（R2：必须经 TopicRetriever 相关性过滤，不得跨课题） */
+  pickQuestion: function(sim, qtype, lessonContext){
+    var lc = lessonContext || (sim && sim.lessonContext) || (APP.state.context && APP.state.context.lessonContext) || null;
+    var persona = (sim && sim.persona) || null;
+    var candidates = APP.TopicRetriever.findQuestions(lc, persona, qtype);
+    if(!candidates.length) return null;
     var used = sim.usedQuestionIds || (sim.usedQuestionIds={});
-    var fresh = pool.filter(function(q){ return !used[q.id]; });
-    var q = (fresh.length ? fresh : pool)[Math.floor(Math.random()*(fresh.length?fresh.length:pool.length))];
+    var fresh = candidates.filter(function(q){ return !used[q.id]; });
+    var q = (fresh.length ? fresh : candidates)[Math.floor(Math.random()*(fresh.length?fresh.length:candidates.length))];
     used[q.id] = true;
-    if(Object.keys(used).length >= APP.KB.studentQuestions.length) sim.usedQuestionIds = {};
+    if(Object.keys(used).length >= candidates.length) sim.usedQuestionIds = {};
     return q;
   },
 
-  /* 决策核心：输入上下文，输出行为意图 intent（离线/在线唯一入口） */
+  /* 决策核心：固定 7 步决策顺序，输出结构化 intent（离线/在线共享，云端只做自然语言化，不得改动意图字段）
+   *   1 当前课题合法性 → 2 外部事件合法性 → 3 教师话语特征 → 4 persona behavior_bias
+   *   → 5 TopicRetriever 候选 → 6 结构化 intent → 7 最终 Topic Gate 再校验 */
   decide: function(ctx){
-    var sim = ctx.sim, persona = sim.persona, bias = persona.behavior_bias||{};
+    var sim = ctx.sim;
+    var persona = sim && sim.persona;
+    var bias = (persona && persona.behavior_bias) || {};
     var t = String(ctx.message||'').trim();
-    var feats = this.detectFeatures(t);
-    var intent = { behavior:'respond', question_type:null, state:'attentive', question:null, topic:ctx.topic||'', reason:'', text:'', sys:null };
 
-    /* 1. 外部事件优先抢占（突发事件 / 迷思概念注入） */
-    if(ctx.externalEvent){
-      var ev = ctx.externalEvent;
-      intent.behavior = ev.type==='emergency' ? 'emergency' : 'question';
-      intent.state = ev.type==='emergency' ? 'excited' : 'confused';
-      intent.text = ev.text; intent.sys = ev.sys;
-      intent.triggerLabel = ev.type==='emergency' ? '课堂突发' : '迷思概念质疑';
-      intent.reason = ev.type==='emergency' ? ('突发事件外部事件输入：'+ev.kind) : '迷思概念外部事件输入';
-      return intent;
+    /* 内部工具：结构化 intent 骨架 + 安全通用意图 */
+    function baseIntent(topic, lessonId){
+      return { behavior:'respond', question_type:null, state:'attentive', question:null,
+               topic:topic||'', reason:'', sourceCandidateId:null, safe_generic:false, lessonId:lessonId||'', text:'', sys:null };
+    }
+    function safeGeneric(reason, topic, lessonId){
+      var it = baseIntent(topic, lessonId);
+      it.safe_generic = true;
+      it.reason = reason || '课题相关题面缺失';
+      return it;
     }
 
-    /* 2. 教师表述触发迷思概念 -> 学生质疑（训练纠错，detectTerms 语义等价匹配） */
+    /* 1. 当前课题合法性：无有效 lessonContext 或 canonicalTopic 为空 → 直接安全通用（严禁跨课题检索） */
+    var lc = ctx.lessonContext || (sim && sim.lessonContext) || (APP.state.context && APP.state.context.lessonContext) || null;
+    var canonicalTopic = (lc && (lc.canonicalTopic || lc.title)) || ctx.topic || '';
+    if(!lc || !canonicalTopic){
+      return safeGeneric('无有效课题上下文', canonicalTopic, lc ? lc.lessonId : '');
+    }
+    var lessonId = lc.lessonId || '';
+    var intent = baseIntent(canonicalTopic, lessonId);
+
+    /* 2. 外部事件合法性：调用方（injectEvent/injectMisconception）已按 TopicRetriever 过滤，此处结构化后交最终 gate */
+    if(ctx.externalEvent){
+      var ev = ctx.externalEvent;
+      if(ev.type === 'emergency'){
+        intent.behavior='emergency'; intent.state='excited';
+        intent.text=ev.text; intent.sys=ev.sys; intent.triggerLabel='课堂突发';
+        intent.reason='突发事件外部事件输入：'+(ev.kind||'');
+        intent.sourceCandidateId = ev.id || null;
+        intent.topic = canonicalTopic;
+      } else { /* misconception */
+        intent.behavior='question'; intent.state='confused';
+        intent.text=ev.text; intent.sys=ev.sys; intent.triggerLabel='迷思概念质疑';
+        intent.reason='迷思概念外部事件输入';
+        intent.sourceCandidateId = ev.id || null;
+        intent.misconception = true;
+        intent.topic = ev.topic || canonicalTopic;
+      }
+      return APP.TopicRetriever.gate(intent, lc);   /* 步骤 7 */
+    }
+
+    /* 3. 教师话语特征 */
+    var feats = this.detectFeatures(t);
+
+    /* 3a. 教师表述触发迷思概念（话语特征之一） -> 学生质疑，同样受课题约束 */
     var mc = APP.KB.physicsMisconceptions.find(function(m){
       var nt = APP.U.norm(t);
       if(!nt) return false;
@@ -2055,13 +2469,16 @@ APP.StudentStateMachine = {
     });
     if(mc){
       intent.behavior='question'; intent.state='confused';
-      intent.text = mc.studentLine; intent.sys = '学生抛出迷思概念：「'+mc.term+'」——请用科学表述纠正。';
-      intent.triggerLabel = '迷思概念质疑';
-      intent.reason = '教师表述触发迷思概念质疑';
-      return intent;
+      intent.text=mc.studentLine; intent.sys='学生抛出迷思概念：「'+mc.term+'」——请用科学表述纠正。';
+      intent.triggerLabel='迷思概念质疑';
+      intent.reason='教师表述触发迷思概念质疑';
+      intent.topic = mc.topic;                 /* 记录实际迷思主题，供硬门校验 */
+      intent.misconception = true;
+      intent.sourceCandidateId = mc.id || null;
+      return APP.TopicRetriever.gate(intent, lc);   /* 步骤 7 */
     }
 
-    /* 3. 按情境 + 人设倾向决定行为与状态 */
+    /* 4. persona behavior_bias + 情境特征决定行为/状态/问题类型（仅倾向，不绑定具体题） */
     if(feats.isExperiment){
       intent.state='excited'; intent.behavior='question'; intent.question_type='experiment';
       intent.reason='实验情境触发';
@@ -2095,14 +2512,21 @@ APP.StudentStateMachine = {
       }
     }
 
-    /* 4. 提问/插话类行为：从题库抽题（不按 persona_id 绑定） */
+    /* 5. 从 TopicRetriever 取得候选 + 6. 生成结构化 intent */
     if((intent.behavior==='question' || intent.behavior==='interrupt') && intent.question_type && !intent.text){
-      var q = this.pickQuestion(sim, intent.question_type);
-      intent.question = q;
-      intent.text = q.question;
-      intent.topic = q.topic;
+      var q = this.pickQuestion(sim, intent.question_type, lc);
+      if(q){
+        intent.question = q;
+        intent.text = q.question;
+        intent.topic = q.topic;                 /* 属于允许主题（TopicRetriever 已保证） */
+        intent.sourceCandidateId = q.id;
+      } else {
+        return safeGeneric('课题相关题面缺失（无 '+intent.question_type+' 类候选）', canonicalTopic, lessonId);
+      }
     }
-    return intent;
+
+    /* 7. 最终 Topic Gate 再校验一次 */
+    return APP.TopicRetriever.gate(intent, lc);
   }
 };
 
@@ -2120,7 +2544,12 @@ APP.Simulator = {
         return (hb?1:0)-(ha?1:0);
       });
     }
-    return { persona:p, turn:0, messages:[], eventQueue:events.slice(0,3), conceptIndex:0, lastTrigger:'', usedQuestionIds:{}, currentState:'attentive', focus:pri, plan:plan };
+    return { persona:p, turn:0, messages:[], eventQueue:events.slice(0,3), conceptIndex:0, lastTrigger:'', usedQuestionIds:{}, currentState:'attentive', focus:pri, plan:plan,
+             lessonContext: APP.LessonContext.deepCopy(APP.state.context.lessonContext),
+             sessionId: 'sim-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8),  /* R4 */
+             requestSeq: 0,
+             lastCloudError: null,
+             pending: false };
   },
 
   /* 通用应答台词（按状态）；人格差异主要由 question 行为（按 question_type 抽题）体现 */
@@ -2167,15 +2596,16 @@ APP.Simulator = {
     return out;
   },
 
-  /* 当前课程主题 */
-  _topic:function(){
-    var lesson = APP.state && APP.state.context && APP.state.context.lesson;
-    return (lesson && lesson.title) || (APP.KB.sampleLesson && APP.KB.sampleLesson.title) || '';
+  /* 当前课程主题（兼容 getter）：优先 sim.lessonContext，其次 state.lessonContext；不回退全局 sampleLesson */
+  _topic:function(sim){
+    return APP.LessonContext.topicOf(sim);
   },
 
-  /* 离线回应：decide -> renderIntent（共享状态机） */
+  /* 离线回应：decide -> gate(硬门) -> renderIntent（共享状态机） */
   respond:function(sim, userText){
-    var intent = APP.StudentStateMachine.decide({ sim:sim, message:userText, topic:APP.Simulator._topic() });
+    var lc = (sim && sim.lessonContext) || (APP.state.context && APP.state.context.lessonContext) || null;
+    var intent = APP.StudentStateMachine.decide({ sim:sim, message:userText, lessonContext:lc, topic:APP.LessonContext.topicOf(sim) });
+    intent = APP.TopicRetriever.gate(intent, lc);
     sim.turn++;
     return APP.Simulator.renderIntent(sim, intent);
   },
@@ -2183,64 +2613,136 @@ APP.Simulator = {
   /* 云端回应：先 decide 得意图（仅一次），再让 DeepSeek 仅做自然语言化表达；失败降级本地。
    * 关键：在线失败时复用已 decide 的 intent 本地措辞，绝不二次咨询状态机（避免状态漂移）。 */
   respondRemote:function(sim, userText, done){
+    /* R4：offline 完全不请求 /api/simulate，直接本地（online 只是"优先尝试云端"，非"必然成功"） */
     if(!APP.Settings.isOnline()){
+      sim.pending = false;
       var rOff=APP.Simulator.respond(sim,userText);
       if(done) done(rOff,'local');
       return rOff;
     }
     var intent;
+    var lc = sim.lessonContext || (APP.state.context && APP.state.context.lessonContext) || null;
     try{
-      intent = APP.StudentStateMachine.decide({ sim:sim, message:userText, topic:APP.Simulator._topic() });
+      intent = APP.StudentStateMachine.decide({ sim:sim, message:userText, lessonContext:lc, topic:APP.LessonContext.topicOf(sim) });
+      intent = APP.TopicRetriever.gate(intent, lc);   /* R2/R3 硬门：拦截跨课题 intent */
     }catch(e){
-      /* decide 异常：交给 respond 重试一次（异常场景兜底，仍在同一 respond 内完成） */
+      sim.pending = false;
       var r0=APP.Simulator.respond(sim,userText);
       if(done) done(r0,'local');
       return r0;
     }
-    /* 本地降级：复用已 decide 的 intent，不再二次 decide */
-    var localFallback=function(){
+
+    /* R4：每个 sim 一个 sessionId，每次云端请求递增 requestSeq */
+    if(!sim.sessionId) sim.sessionId = 'sim-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
+    sim.requestSeq = (sim.requestSeq||0) + 1;
+    var mySession = sim.sessionId, mySeq = sim.requestSeq;
+    sim.pending = true;
+
+    var timeoutMs = APP.CLOUD.simTimeoutMs || 8000;
+    var controller = (typeof AbortController!=='undefined') ? new AbortController() : null;
+    sim._abort = controller;   /* R7：暴露当前请求的控制器，startReteach 可中止 */
+    var timedOut = false;
+    var timer = setTimeout(function(){ timedOut = true; if(controller){ try{ controller.abort(); }catch(e){} } }, timeoutMs);
+
+    /* 会话/请求已过期判定：换人、离开课堂、session 重置、被更新的请求取代 */
+    function stale(){
+      var cur = APP.state.context.sim;
+      if(cur !== sim) return true;
+      if((sim.stage||'classroom') !== 'classroom') return true;
+      if(sim.sessionId !== mySession) return true;
+      if(sim.requestSeq !== mySeq) return true;
+      return false;
+    }
+    function clearTimer(){ if(timer){ clearTimeout(timer); timer=null; } }
+
+    /* 成功：DeepSeek 只贡献自然语言 text；behavior/topic/question_type/sourceCandidateId 保持本地 intent */
+    function onSuccess(d){
+      if(stale()){ clearTimer(); return; }
+      clearTimer();
+      sim.pending = false;
+      sim.lastCloudError = null;
       sim.turn++;
-      var r=APP.Simulator.renderIntent(sim,intent);
-      if(done) done(r,'local');
-      return r;
+      sim.currentState = intent.state;
+      var out = { text:d.text, sys:d.sys||null, trigger:d.trigger||('云端·'+intent.behavior), intent:intent };
+      if(done) done(out, 'cloud');
+    }
+    /* 失败：标准化错误码 → 本地 fallback（source=local + lastCloudError 落盘） */
+    function onFailure(errCode){
+      if(stale()){ clearTimer(); return; }
+      clearTimer();
+      sim.pending = false;
+      sim.lastCloudError = errCode;
+      sim.turn++;
+      var r = APP.Simulator.renderIntent(sim, intent);
+      if(!stale()){ APP.Toast.show('在线学生服务不可用，已使用本地学生规则','warn'); }   /* 仅 still-classroom 提示一次 */
+      if(done) done(r, 'local');
+    }
+    /* 过期丢弃：静默清理，不弹 toast、不推送消息；仅在未被更新请求取代时清理 pending */
+    function onDiscard(){
+      clearTimer();
+      var cur = APP.state.context.sim;
+      if(cur === sim && sim.sessionId === mySession && sim.requestSeq === mySeq){
+        sim.pending = false;
+      }
+    }
+
+    var history = sim.messages.slice(-8).map(function(m){
+      return { role:(m.who==='student'?'student':'teacher'), text:m.text };
+    });
+    var payload = {
+      sessionId: mySession,
+      requestSeq: mySeq,
+      lessonId: (lc && lc.lessonId) || '',
+      topic: (lc && (lc.canonicalTopic || lc.title)) || '',
+      aliases: (lc && lc.aliases) || [],
+      subject: (lc && lc.subject) || '物理',
+      grade: (lc && lc.grade) || '',
+      personaId: sim.persona.id,
+      personaName: sim.persona.name,
+      personaStyle: sim.persona.style,
+      history: history,
+      message: userText,
+      intent: {
+        behavior: intent.behavior,
+        question_type: intent.question_type,
+        state: intent.state,
+        questionText: intent.text || '',
+        topic: intent.topic || '',
+        sourceCandidateId: intent.sourceCandidateId || null,
+        lessonId: intent.lessonId || ''
+      }
     };
+
     try{
-      var lesson=APP.state.context.lesson;
-      var history=sim.messages.slice(-8).map(function(m){
-        return { role:(m.who==='student'?'student':'teacher'), text:m.text };
-      });
-      fetch(APP.CLOUD.workerUrl+'/api/simulate', {
+      fetch(APP.CLOUD.workerUrl + '/api/simulate', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          personaId: sim.persona.id,
-          personaName: sim.persona.name,
-          personaStyle: sim.persona.style,
-          personaCatchphrase: sim.persona.catchphrase||'',
-          subject: (APP.KB.sampleLesson&&APP.KB.sampleLesson.subject)||'物理',
-          topic: (lesson&&lesson.title)||'',
-          history: history,
-          message: userText,
-          intent: {
-            behavior: intent.behavior,
-            question_type: intent.question_type,
-            state: intent.state,
-            questionText: intent.text || '',
-            topic: intent.topic || ''
-          }
-        })
-      }).then(function(r){ return r.ok? r.json() : Promise.reject(new Error('HTTP '+r.status)); })
-        .then(function(d){
-          if(d && d.text){
-            sim.turn++;
-            sim.currentState = intent.state;
-            done({ text:d.text, sys:d.sys||null, trigger:d.trigger||('云端·'+intent.behavior), intent:intent }, 'cloud');
-            return d;
-          }
-          return localFallback();
-        })
-        .catch(function(){ APP.Toast.show('在线学生服务不可用，已使用本地学生规则','warn'); localFallback(); });
-    }catch(e){ localFallback(); }
+        body: JSON.stringify(payload),
+        signal: controller ? controller.signal : undefined
+      }).then(function(resp){
+        if(stale()){ onDiscard(); return; }
+        if(resp.status >= 400 && resp.status < 500){ onFailure('HTTP_4XX'); return; }
+        if(resp.status >= 500){ onFailure('HTTP_5XX'); return; }
+        return resp.json().then(function(d){
+          if(stale()){ onDiscard(); return; }
+          if(!d || typeof d.text !== 'string' || !d.text){ onFailure('BAD_RESPONSE'); return; }
+          onSuccess(d);
+        }).catch(function(){
+          if(stale()){ onDiscard(); return; }
+          onFailure('BAD_RESPONSE');   /* JSON 解析失败 / 非预期响应 */
+        });
+      }).catch(function(err){
+        if(stale()){ onDiscard(); return; }
+        var code;
+        if(timedOut) code = 'TIMEOUT';
+        else if(err && err.name === 'AbortError') code = 'ABORTED';
+        else code = 'NETWORK_ERROR';
+        onFailure(code);
+      });
+    }catch(e){
+      if(stale()){ onDiscard(); return; }
+      onFailure('NETWORK_ERROR');
+    }
   }
 };
 
@@ -2261,6 +2763,9 @@ APP.SimAnalyzer = {
   },
   analyze:function(sim){
     var msgs=(sim&&sim.messages)||[], items=[], self=this;
+    /* 0. 课题来源：当前 sim.lessonContext（R1 单一事实源），仅作上下文标注，不改分析规则 */
+    var lc=(sim&&sim.lessonContext)||null;
+    var topic=lc ? (lc.canonicalTopic||lc.title||'') : APP.LessonContext.topicOf(sim);
     /* 1. 本轮训练目标：直接来自已有诊断 priority，不重新评分 */
     var focus=(sim&&sim.focus)||null;
     if(focus&&focus.action){
@@ -2306,7 +2811,107 @@ APP.SimAnalyzer = {
         evidenceText:'（本轮记录中未见「很好 / 不错 / 请坐」等反馈语）', evidenceIndex:null,
         next:'学生回答后先复述要点，再肯定或纠正，最后补充完整表述。' });
     }
-    return { src:'local', items:items.slice(0,3) };
+    return { src:'local', topic:topic, items:items.slice(0,3) };
+  }
+};
+
+/* ===================== #region 模拟课堂云端分析器（R5） =====================
+ * 独立 provider：绝不调用 APP.AgentProvider.analyze 或 /api/analyze。
+ * 专用端点 POST /api/sim-analyze：输入 lessonContext/persona/trainingFocus/messages/events，
+ * 返回严格 { summary, items:[{id,title,evidenceIndices,observation,impact,nextAction}] }。
+ * 云端失败/离线/未配置 → 回退 APP.SimAnalyzer（本地），src=local。
+ */
+APP.SimAgentProvider = {
+  configured: true,   /* 后端 /api/sim-analyze 已在 cloud-worker.js 实现；部署实例缺失时按 404 动态降级 */
+  _backendMissing: false,
+
+  buildPayload: function(sim){
+    var lc = (sim && sim.lessonContext) || (APP.state.context && APP.state.context.lessonContext) || null;
+    return {
+      lessonContext: lc,
+      persona: { id:(sim.persona&&sim.persona.id)||'', name:(sim.persona&&sim.persona.name)||'', style:(sim.persona&&sim.persona.style)||'' },
+      trainingFocus: (sim && sim.focus) || null,
+      messages: (sim.messages||[]).map(function(m){ return { who:m.who, text:m.text }; }),
+      events: (sim.eventQueue||[]).map(function(e){ return { id:e.id, kind:e.kind, text:e.text }; })
+    };
+  },
+
+  /* 校验云端返回：evidenceIndices 必须全部落在 messages 内；items ≤3 */
+  validate: function(d, sim){
+    if(!d || typeof d!=='object') return { ok:false, reason:'非对象' };
+    if(typeof d.summary!=='string') return { ok:false, reason:'summary 缺失' };
+    if(!Array.isArray(d.items)) return { ok:false, reason:'items 非数组' };
+    if(d.items.length>3) return { ok:false, reason:'items 超过 3 条' };
+    var N=(sim.messages||[]).length;
+    for(var i=0;i<d.items.length;i++){
+      var it=d.items[i];
+      if(!it || typeof it.title!=='string' || !it.title) return { ok:false, reason:'第 '+(i+1)+' 条 title 缺失' };
+      if(!Array.isArray(it.evidenceIndices)) return { ok:false, reason:'第 '+(i+1)+' 条 evidenceIndices 非数组' };
+      for(var j=0;j<it.evidenceIndices.length;j++){
+        var idx=it.evidenceIndices[j];
+        if(typeof idx!=='number' || idx%1!==0 || idx<0 || idx>=N) return { ok:false, reason:'第 '+(i+1)+' 条 evidenceIndices 越界：'+idx };
+      }
+      if(typeof it.observation!=='string') return { ok:false, reason:'第 '+(i+1)+' 条 observation 缺失' };
+      if(typeof it.nextAction!=='string') return { ok:false, reason:'第 '+(i+1)+' 条 nextAction 缺失' };
+    }
+    return { ok:true };
+  },
+
+  /* 归一化：本地/云端统一成 {src, summary, topic, items:[{id,title,evidenceIndices,observation,impact,nextAction}]} */
+  normalize: function(d, src){
+    var items=[];
+    (d && d.items ? d.items : []).forEach(function(it, i){
+      var idx = (it.evidenceIndices && it.evidenceIndices.length) ? it.evidenceIndices.slice()
+              : (it.evidenceIndex!=null ? [it.evidenceIndex] : []);
+      items.push({
+        id: it.id || (src + '-' + (i+1)),
+        title: it.title || '',
+        evidenceIndices: idx,
+        observation: it.observation || it.evidenceText || '',
+        impact: it.impact || '',
+        nextAction: it.nextAction || it.next || ''
+      });
+    });
+    return { src: src, summary: (d && d.summary) || '', topic: (d && d.topic) || '', items: items };
+  },
+
+  _local: function(sim, done){
+    var ln = this.normalize(APP.SimAnalyzer.analyze(sim), 'local');
+    if(done) done(ln, 'local');
+    return ln;
+  },
+
+  /* 分析入口：离线/未配置直接本地；在线优先云端、失败回退本地（src=local） */
+  analyze: function(sim, opts, done){
+    opts = opts || {};
+    if(!APP.Settings.isOnline() || !this.configured || this._backendMissing){
+      return this._local(sim, done);
+    }
+    var self=this;
+    var payload = this.buildPayload(sim);
+    try{
+      fetch(APP.CLOUD.workerUrl + '/api/sim-analyze', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      }).then(function(r){
+        if(r.status===404){ self._backendMissing=true; self.configured=false; throw new Error('endpoint missing'); }
+        return r.ok ? r.json() : Promise.reject(new Error('HTTP '+r.status));
+      }).then(function(d){
+        var v = self.validate(d, sim);
+        if(v.ok){
+          var cloud = self.normalize(d, 'cloud');
+          cloud.src = 'cloud';
+          if(done) done(cloud, 'cloud');
+        } else {
+          self._local(sim, done);
+        }
+      }).catch(function(){
+        self._local(sim, done);
+      });
+    }catch(e){
+      self._local(sim, done);
+    }
   }
 };
 
@@ -2413,9 +3018,12 @@ APP.Runner = {
       APP.Runner.running=false;
     }, 350);
   },
-  approve:function(stepId){
+  approve:function(stepId, opts){
+    opts = opts || {};
     APP.Steps.set(stepId, APP.ST.DONE);
     APP.Steps.unlockNext(stepId);
+    /* 原子式切换：render:false 时只改状态，不 toast 不 render，由外层 action 统一 save + render */
+    if(opts.render === false) return;
     APP.Toast.show('人工复核通过，进入下一步','ok');
     APP.render();
   }
@@ -2481,6 +3089,12 @@ APP.Rail = {
 APP.View = {
   home:function(){
     var ctx=APP.state.context, lesson=ctx.lesson, diag=ctx.diagnosis;
+    /* 回退：本轮 diagnosis 为空时，取「成长档案」最后一轮成绩（重讲 after 优先，其次首讲 before） */
+    if((!diag || !diag.dimensions || !diag.dimensions.length) && (ctx.archive && ctx.archive.length)){
+      var _last = ctx.archive[ctx.archive.length-1];
+      if(_last && _last.after && _last.after.dimensions && _last.after.dimensions.length) diag = _last.after;
+      else if(_last && _last.before && _last.before.dimensions && _last.before.dimensions.length) diag = _last.before;
+    }
     var started=!!(lesson||diag||ctx.archive);
     var ab={}; if(diag&&diag.dimensions){ diag.dimensions.forEach(function(x){ ab[x.name]={name:x.name, score:x.score}; }); }
     var names=Object.keys(ab), weak=null, weakName='', weakScore=0;
@@ -2849,35 +3463,43 @@ APP.View = {
     return h;
   },
 
-  /* E 本地分析：本轮不调用云端，明确标注本地（R3） */
+  /* E 分析中：离线走本地、在线走云端（R5），明确标注来源，无假进度 */
   _simAnalyzing:function(){
     var sim=APP.state.context.sim, ph=sim.analysisPhase||'read';
     var done=(ph==='done');
+    var online=APP.Settings.isOnline();
+    var modeLabel=online?'云端':'本地';
     var h='<div class="sim-stage">';
     h+='<div class="st-icon">'+APP.C.icon('spark')+'</div>';
-    h+='<h2>'+(done?'分析完成 · 本地':'整理本轮记录')+'</h2>';
-    h+='<div class="sub">'+(done?'本轮课堂记录已整理完成，可查看训练建议。':'基于本轮课堂互动记录进行本地分析，不上传、不调用云端。')+'</div>';
+    h+='<h2>'+(done?('分析完成 · '+modeLabel):'整理本轮记录')+'</h2>';
+    h+='<div class="sub">'+(done?'本轮课堂记录已整理完成，可查看训练建议。':(online?'基于本轮课堂互动记录进行云端 AI 分析…':'基于本轮课堂互动记录进行本地分析，不上传、不调用云端。'))+'</div>';
     h+='<div class="meta">'
       +'<div class="row"><span class="k">课堂记录</span><span class="v">'+sim.messages.length+' 条</span></div>'
-      +'<div class="row"><span class="k">分析方式</span><span class="v">本地分析</span></div></div>';
+      +'<div class="row"><span class="k">分析方式</span><span class="v">'+modeLabel+'分析</span></div></div>';
     if(!done) h+='<div class="enter-dots"><i></i><i></i><i></i></div>';
     h+='</div>';
     return h;
   },
 
-  /* F 整体建议：最多 3 条，可回到课堂记录 */
+  /* F 整体建议：最多 3 条，可回到课堂记录（兼容本地/云端两种 item 结构） */
   _simAdvice:function(){
     var sim=APP.state.context.sim;
-    var a=sim.analysis||{src:'local',items:[]};
+    var a=sim.analysis||{src:'local',summary:'',items:[]};
+    var srcLabel=(a.src==='cloud')?'云端':'本地';
     var title=a.items.length?('这一轮，先改这 '+a.items.length+' 件事'):'本轮课堂记录较少，先补充一次完整互动';
     var h='<div class="page-head"><span class="eyebrow">'+APP.C.icon('classroom')+'Step 3 · 本轮建议</span><h1>'+title+'</h1>'
-      +'<p><span class="src-badge">分析完成 · 本地</span>　本轮共 '+sim.messages.length+' 条课堂记录，以下建议来自真实互动，可逐条回到课堂记录查看。</p></div>';
+      +'<p><span class="src-badge">分析完成 · '+srcLabel+'</span>　本轮共 '+sim.messages.length+' 条课堂记录，以下建议来自真实互动，可逐条回到课堂记录查看。</p></div>';
+    if(a.summary) h+='<div class="note">'+APP.U.esc(a.summary)+'</div>';
     h+='<div class="advice-list">';
     a.items.forEach(function(it,i){
+      var obs=it.observation||it.evidenceText||'';
+      var act=it.nextAction||it.next||'';
+      var idxs=(it.evidenceIndices&&it.evidenceIndices.length)?it.evidenceIndices:(it.evidenceIndex!=null?[it.evidenceIndex]:[]);
       h+='<div class="advice-item"><div class="ai-h"><span class="ai-n">'+(i+1)+'</span><span class="ai-t">'+APP.U.esc(it.title)+'</span></div>';
-      h+='<div class="ai-row"><span class="ai-k">课堂证据</span><span class="ai-v ai-ev">'+(it.evidenceText?APP.U.esc(it.evidenceText):'（本轮记录中暂无对应发言）')+'</span></div>';
-      h+='<div class="ai-row"><span class="ai-k">怎么练</span><span class="ai-v">'+APP.U.esc(it.next)+'</span></div>';
-      if(it.evidenceIndex!=null) h+='<div class="ai-act"><button class="btn sm ghost" onclick="APP.act.backToRecord('+it.evidenceIndex+')">回到课堂记录</button></div>';
+      h+='<div class="ai-row"><span class="ai-k">课堂证据</span><span class="ai-v ai-ev">'+(obs?APP.U.esc(obs):'（本轮记录中暂无对应发言）')+'</span></div>';
+      if(it.impact) h+='<div class="ai-row"><span class="ai-k">影响</span><span class="ai-v">'+APP.U.esc(it.impact)+'</span></div>';
+      h+='<div class="ai-row"><span class="ai-k">怎么练</span><span class="ai-v">'+APP.U.esc(act)+'</span></div>';
+      if(idxs.length) h+='<div class="ai-act">'+idxs.map(function(idx){ return '<button class="btn sm ghost" onclick="APP.act.backToRecord('+idx+')">回到课堂记录</button>'; }).join('')+'</div>';
       h+='</div>';
     });
     h+='</div>';
@@ -3198,7 +3820,8 @@ APP.PersonaCarousel = (function(){
  */
 APP.CLOUD = {
   workerUrl: 'https://shrill-fire-40ca.2478841433.workers.dev',
-  asrTimeoutMs: 120000  /* 录音文件识别最长等待 2 分钟 */
+  asrTimeoutMs: 120000,   /* 录音文件识别最长等待 2 分钟 */
+  simTimeoutMs: 8000      /* 模拟学生云端请求超时（毫秒，R4） */
 };
 
 /* ===================== #region L4.5 录制与语音转写适配层 ===================== */
@@ -3754,64 +4377,130 @@ APP.act = {
     if(!t) t=APP.STEPS[APP.STEPS.length-1].id;
     APP.state.meta.currentStep=t; APP.Store.save(APP.state); APP.render();
   },
+  /* R6：诊断请求唯一 id（防旧课题云端诊断覆盖新课题） */
+  _newRequestId:function(){
+    return 'diag-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
+  },
+
+  /* R6：统一诊断请求。online→AgentProvider.analyze（携带真实 subject/grade）；offline→本地，绝不请求 /api/analyze。
+   * 回调统一为 cb(diagnosis, src, requestId)，diagnosis 带 src / source / requestId / title / lessonId。 */
+  _requestDiagnosis:function(parsed, meta, cb){
+    meta = meta || {};
+    var subject = meta.subject || '物理';
+    var grade = meta.grade || '';
+    var title = meta.title || '';
+    var lessonId = meta.lessonId || '';
+    var requestId = meta.requestId || APP.act._newRequestId();
+    if(!APP.Settings.isOnline()){
+      var local = APP.Engine.diagnose(parsed);
+      local.title = title;
+      local.src = 'local';
+      local.source = 'local';
+      local.requestId = requestId;
+      local.lessonId = lessonId;
+      if(cb) cb(local, 'local', requestId);
+      return local;
+    }
+    APP.AgentProvider.analyze(parsed, { subject:subject, grade:grade }, function(d, src){
+      d.title = title;
+      d.src = src || 'local';
+      d.source = src || 'local';
+      d.requestId = requestId;
+      d.lessonId = lessonId;
+      if(cb) cb(d, src, requestId);
+    });
+  },
+
+  /* R7：重讲稿诊断统一入口（版本诊断）。携带 subject/grade/lessonId/requestId，
+   * 不覆盖首讲 lesson/lessonContext/diagnosis，仅产出"重讲版本"诊断。 */
+  _ingestLessonVersion:function(meta, cb){
+    meta = meta || {};
+    var raw = String(meta.raw||'');
+    var parsed = meta.parsed || APP.Engine.parse(raw);
+    if(!parsed || !parsed.segments || !parsed.segments.length){
+      APP.Toast.show('未识别到有效重讲内容，请检查格式 [MM:SS]','warn');
+      if(cb) cb(null, 'local', null);
+      return null;
+    }
+    if(!parsed.raw) parsed.raw = raw;
+    var subject = meta.subject || '物理';
+    var grade = meta.grade || '';
+    var title = meta.title || '重讲练习';
+    var lessonId = meta.lessonId || '';
+    var requestId = APP.act._newRequestId();
+    return APP.act._requestDiagnosis(parsed, { subject:subject, grade:grade, title:title, lessonId:lessonId, requestId:requestId }, function(d, src, rid){
+      d.lessonId = lessonId;
+      if(cb) cb(d, src, rid);
+    });
+  },
+
+  /* R6：统一试讲输入与诊断链（预置样例/上传/粘贴/录音 共用）。
+   * parse → LessonContext → local 立即诊断 → save/render → online 异步诊断（可选）→ 更新诊断 src。 */
+  _ingestLesson:function(meta){
+    meta = meta || {};
+    var raw = String(meta.raw||'');
+    var parsed = meta.parsed || APP.Engine.parse(raw);
+    if(!parsed || !parsed.segments || !parsed.segments.length){
+      APP.Toast.show('未识别到有效转写内容，请检查格式 [MM:SS]','warn');
+      return null;
+    }
+    if(!parsed.raw) parsed.raw = raw;
+    var subject = meta.subject || '物理';
+    var grade = meta.grade || '';
+    var title = meta.title || '自定义试讲';
+    var source = meta.source || 'custom';
+
+    /* parse → LessonContext（单一事实源，同时使旧 sim 失效） */
+    APP.state.context.reviewed = {};
+    APP.state.context.lesson = { title:title, subject:subject, grade:grade, raw:raw, parsed:parsed, source:source,
+                                 durationSec:meta.durationSec||0, sampleId:meta.sampleId||null };
+    APP.LessonContext.apply(APP.state.context.lesson);
+
+    /* local 立即诊断（避免空白），标 src=local + requestId + lessonId */
+    var requestId = APP.act._newRequestId();
+    var lessonId = (APP.state.context.lessonContext && APP.state.context.lessonContext.lessonId) || '';
+    var d = APP.Engine.diagnose(parsed);
+    d.title = title;
+    d.src = 'local';
+    d.source = 'local';
+    d.requestId = requestId;
+    d.lessonId = lessonId;
+    APP.state.context.diagnosis = d;
+
+    /* save state → render */
+    APP.Steps.set('collect', APP.ST.DONE);
+    APP.Steps.set('diagnose', APP.ST.REVIEW);
+    APP.state.meta.currentStep = 'collect';
+    APP.Store.save(APP.state); APP.render();
+    APP.act.guideToDiagnose();
+
+    /* online 异步诊断（可选）→ 更新诊断 src；失败保留本地，不显示“云端完成” */
+    if(APP.Settings.isOnline()){
+      APP.Toast.show('已载入「'+title+'」，正在云端诊断…','ok');
+      APP.act._requestDiagnosis(parsed, { subject:subject, grade:grade, title:title, lessonId:lessonId, requestId:requestId }, function(cloudD, src){
+        var cur = APP.state.context.diagnosis;
+        if(cur && cur.requestId !== requestId){ return; }   /* 旧课题云端诊断：静默丢弃 */
+        APP.state.context.diagnosis = cloudD;
+        APP.Store.save(APP.state); APP.render();
+        if(src==='cloud') APP.Toast.show('云端诊断完成','ok');
+        else APP.Toast.show('云端不可用，已使用本地诊断','warn');
+      });
+    } else {
+      APP.Toast.show('已载入「'+title+'」，离线诊断完成','ok');
+    }
+    return requestId;
+  },
+
   loadSample:function(id){
     var demo = (!id || id==='demo');
     var L = demo ? APP.KB.sampleLesson : APP.KB.getSampleLesson(id);
     var raw = demo ? L.transcriptBefore : L.transcript;
-    APP.state.context.reviewed={};
-    APP.state.context.lesson={ title:L.title, subject:L.subject, grade:L.grade, raw:raw, source:'sample', sampleId:(demo?'demo':id) };
-    APP.state.context.lesson.parsed=APP.Engine.parse(raw);
-    /* 立即用离线诊断渲染，避免界面空白 */
-    APP.state.context.diagnosis=APP.Engine.diagnose(APP.state.context.lesson.parsed);
-    APP.state.context.diagnosis.title=L.title;
-    APP.Steps.set('collect',APP.ST.DONE);
-    APP.Steps.set('diagnose',APP.ST.REVIEW);
-    APP.state.meta.currentStep='collect';
-    APP.Store.save(APP.state); APP.render();
-    APP.act.guideToDiagnose();
-    if(APP.Settings.isOnline()){
-      APP.Toast.show('已载入「'+L.title+'」，正在云端诊断…','ok');
-      /* 云端 LLM 异步覆盖诊断结果（失败自动降级，来源写入 d.source） */
-      APP.AgentProvider.analyze(APP.state.context.lesson.parsed, {subject:L.subject, grade:L.grade}, function(d, src){
-        d.title=L.title;
-        d.source=src||'local';
-        APP.state.context.diagnosis=d;
-        APP.Store.save(APP.state); APP.render();
-        APP.Toast.show(src==='cloud'?'云端诊断完成':'云端不可用，已使用本地诊断', src==='cloud'?'ok':'warn');
-      });
-    } else {
-      APP.Toast.show('已载入「'+L.title+'」，离线诊断完成','ok');
-    }
+    APP.act._ingestLesson({ title:L.title, subject:L.subject, grade:L.grade, raw:raw, source:'sample', sampleId:(demo?'demo':id) });
   },
   parseTranscript:function(){
     var t=APP.U.el('transcriptInput').value;
     if(!t.trim()){ APP.Toast.show('请先粘贴转写稿','warn'); return; }
-    var parsed=APP.Engine.parse(t);
-    if(!parsed.segments.length){ APP.Toast.show('未识别到有效转写内容，请检查格式 [MM:SS]','warn'); return; }
-    parsed.raw=t;
-    APP.state.context.reviewed={};
-    APP.state.context.lesson={ title:'自定义试讲', subject:'物理', grade:'', raw:t, parsed:parsed, source:'pasted' };
-    /* 立即用离线诊断渲染，避免界面空白 */
-    APP.state.context.diagnosis=APP.Engine.diagnose(parsed);
-    APP.state.context.diagnosis.title='自定义试讲';
-    APP.Steps.set('collect',APP.ST.DONE);
-    APP.Steps.set('diagnose',APP.ST.REVIEW);
-    APP.state.meta.currentStep='collect';
-    APP.Store.save(APP.state); APP.render();
-    APP.act.guideToDiagnose();
-    if(APP.Settings.isOnline()){
-      APP.Toast.show('转写稿已解析，正在云端诊断…','ok');
-      /* 云端 LLM 异步覆盖诊断结果（失败自动降级，来源写入 d.source） */
-      APP.AgentProvider.analyze(parsed, {subject:'物理'}, function(d, src){
-        d.title='自定义试讲';
-        d.source=src||'local';
-        APP.state.context.diagnosis=d;
-        APP.Store.save(APP.state); APP.render();
-        APP.Toast.show(src==='cloud'?'云端诊断完成':'云端不可用，已使用本地诊断', src==='cloud'?'ok':'warn');
-      });
-    } else {
-      APP.Toast.show('转写稿已解析，离线诊断完成','ok');
-    }
+    APP.act._ingestLesson({ title:'自定义试讲', subject:'物理', grade:'', raw:t, source:'pasted' });
   },
   uploadTranscript:function(input){
     var f=input.files&&input.files[0];
@@ -3820,33 +4509,8 @@ APP.act = {
     var rd=new FileReader();
     rd.onload=function(){
       var t=String(rd.result||'');
-      var parsed=APP.Engine.parse(t);
-      if(!parsed.segments.length){ APP.Toast.show('文件中未识别到有效转写内容','warn'); return; }
       var title=f.name.replace(/\.[^.]+$/,'')||'上传试讲';
-      parsed.raw=t;
-      APP.state.context.reviewed={};
-      APP.state.context.lesson={ title:title, subject:'物理', grade:'', raw:t, parsed:parsed, source:'upload' };
-      /* 立即用离线诊断渲染，避免界面空白 */
-      APP.state.context.diagnosis=APP.Engine.diagnose(parsed);
-      APP.state.context.diagnosis.title=title;
-      APP.Steps.set('collect',APP.ST.DONE);
-      APP.Steps.set('diagnose',APP.ST.REVIEW);
-      APP.state.meta.currentStep='collect';
-      APP.Store.save(APP.state); APP.render();
-      APP.act.guideToDiagnose();
-      if(APP.Settings.isOnline()){
-        APP.Toast.show('已上传转写稿，正在云端诊断…','ok');
-        /* 云端 LLM 异步覆盖诊断结果（失败自动降级，来源写入 d.source） */
-        APP.AgentProvider.analyze(parsed, {subject:'物理'}, function(d, src){
-          d.title=title;
-          d.source=src||'local';
-          APP.state.context.diagnosis=d;
-          APP.Store.save(APP.state); APP.render();
-          APP.Toast.show(src==='cloud'?'云端诊断完成':'云端不可用，已使用本地诊断', src==='cloud'?'ok':'warn');
-        });
-      } else {
-        APP.Toast.show('已上传转写稿，离线诊断完成','ok');
-      }
+      APP.act._ingestLesson({ title:title, subject:'物理', grade:'', raw:t, source:'upload' });
     };
     rd.onerror=function(){ APP.Toast.show('文件读取失败','warn'); };
     rd.readAsText(f);
@@ -3890,36 +4554,9 @@ APP.act = {
       onError:function(msg){ APP.Toast.show(msg,'warn'); APP.renderRecordPanel(); }
     });
   },
-  /* 通用：写入转写稿 + 异步诊断（先离线渲染避免空白，云端 LLM 回来后覆盖） */
+  /* R6：录音转写 → 统一到 _ingestLesson */
   _ingestTranscript:function(text, title, source, durationSec){
-    var parsed=APP.Engine.parse(text);
-    if(!parsed.segments.length){
-      APP.Toast.show('转写结果格式异常，请重试','warn'); APP.renderRecordPanel(); return;
-    }
-    parsed.raw=text;
-    APP.state.context.reviewed={};
-    APP.state.context.lesson={ title:title, subject:'物理', grade:'', raw:text, parsed:parsed, source:source, durationSec:durationSec||0 };
-    /* 立即用离线诊断渲染，避免界面空白 */
-    APP.state.context.diagnosis=APP.Engine.diagnose(parsed);
-    APP.state.context.diagnosis.title=title;
-    APP.Steps.set('collect',APP.ST.DONE);
-    APP.Steps.set('diagnose',APP.ST.REVIEW);
-    APP.state.meta.currentStep='collect';
-    APP.Store.save(APP.state); APP.render();
-    APP.act.guideToDiagnose();
-    if(APP.Settings.isOnline()){
-      APP.Toast.show('转写完成，正在云端诊断…','ok');
-      /* 云端 LLM 异步覆盖诊断结果（失败自动降级，来源写入 d.source） */
-      APP.AgentProvider.analyze(parsed, {subject:'物理'}, function(d, src){
-        d.title=title;
-        d.source=src||'local';
-        APP.state.context.diagnosis=d;
-        APP.Store.save(APP.state); APP.render();
-        APP.Toast.show(src==='cloud'?'云端诊断完成，点击「开始诊断」查看结果':'云端不可用，已使用本地诊断', src==='cloud'?'ok':'warn');
-      });
-    } else {
-      APP.Toast.show('转写完成，离线诊断完成','ok');
-    }
+    APP.act._ingestLesson({ title:title||'麦克风录制试讲', subject:'物理', grade:'', raw:text, source:source||'recorded', durationSec:durationSec||0 });
   },
   finishRecording:function(){
     var R=APP.Recorder;
@@ -3957,15 +4594,22 @@ APP.act = {
     APP.Recorder.cancel(); APP.renderRecordPanel();
   },
   clearLesson:function(){
+    /* 清除本轮课题：清空本轮上下文，但保留 archive（成长档案）；五步状态统一回到起点 */
     APP.state.context.lesson=null; APP.state.context.diagnosis=null; APP.state.context.reviewed={};
+    APP.state.context.lessonContext=null; APP.state.context.sim=null; APP.state.context.simDraft=null;   /* R1 */
+    APP.state.context.compare=null;
+    APP.state.context.reteachFocus=null; APP.state.context.reteachDimensionId=null;
     APP.Steps.set('collect',APP.ST.READY); APP.Steps.set('diagnose',APP.ST.LOCKED);
+    APP.Steps.set('simulate',APP.ST.LOCKED); APP.Steps.set('compare',APP.ST.LOCKED); APP.Steps.set('archive',APP.ST.LOCKED);
     APP.Store.save(APP.state); APP.render();
   },
   approve:function(id){
-    APP.Runner.approve(id);
+    /* 原子式：先改状态（不 render），再统一 currentStep + save + render + toast */
+    APP.Runner.approve(id, {render:false});
     var next=APP.Steps.next(id);
     if(next) APP.state.meta.currentStep=next;
     APP.Store.save(APP.state); APP.render();
+    APP.Toast.show('人工复核通过，进入下一步','ok');
   },
   /* A：选中学生（仅选中，不直接开始） */
   selectPersona:function(pid){
@@ -4016,7 +4660,7 @@ APP.act = {
     sim.messages.push({who:'teacher', text:t});
     sim.highlightIndex=null;
     inp.value='';
-    sim.pending=true;                     /* 学生回应前先显示 typing 指示（在线/离线一致） */
+    sim.pending=true;                     /* 学生回应前先显示 typing 指示；pending 由 respondRemote 负责清理（R4） */
     APP.Store.save(APP.state);
     APP.View.renderChat();                /* 增量更新对话区，输入框不失焦（R7） */
     inp.focus();
@@ -4025,7 +4669,6 @@ APP.act = {
       var cur=APP.state.context.sim;
       if(!cur || cur!==sim) return;
       APP.Simulator.respondRemote(sim, t, function(r, src){
-        sim.pending=false;
         if(r.sys) sim.messages.push({who:'sys', text:r.sys});
         sim.messages.push({who:'student', text:r.text});
         sim.lastTrigger=(src==='cloud'?'[云端] ':'')+(r.trigger||'');
@@ -4038,10 +4681,14 @@ APP.act = {
   injectEvent:function(){
     APP.act._closeSimMenu();
     var sim=APP.state.context.sim; if(!sim) return;
-    var ev=APP.KB.classroomEvents[Math.floor(Math.random()*APP.KB.classroomEvents.length)];
+    var lc = (sim && sim.lessonContext) || (APP.state.context && APP.state.context.lessonContext) || null;
+    var pool = APP.TopicRetriever.findEvents(lc, sim.focus);   /* R2：仅 generic 或明确匹配课题的事件 */
+    if(!pool.length){ APP.Toast.show('当前课题暂无适用的课堂突发事件','warn'); return; }
+    var ev=pool[Math.floor(Math.random()*pool.length)];
     /* 突发事件作为状态机外部事件输入，由状态机决定反应 */
-    var intent = APP.StudentStateMachine.decide({ sim:sim, message:'', topic:APP.Simulator._topic(),
-      externalEvent:{ type:'emergency', kind:ev.kind, text:ev.text, sys:'突发事件：'+ev.kind+'——请给出应对策略。' } });
+    var intent = APP.StudentStateMachine.decide({ sim:sim, message:'', lessonContext:lc, topic:APP.LessonContext.topicOf(sim),
+      externalEvent:{ type:'emergency', id:ev.id, kind:ev.kind, text:ev.text, sys:'突发事件：'+ev.kind+'——请给出应对策略。' } });
+    intent = APP.TopicRetriever.gate(intent, lc);
     sim.turn++;
     var r = APP.Simulator.renderIntent(sim, intent);
     if(r.sys) sim.messages.push({who:'sys', text:r.sys});
@@ -4055,11 +4702,15 @@ APP.act = {
   injectMisconception:function(){
     APP.act._closeSimMenu();
     var sim=APP.state.context.sim; if(!sim) return;
-    var mc=APP.KB.physicsMisconceptions[sim.conceptIndex % APP.KB.physicsMisconceptions.length];
+    var lc = (sim && sim.lessonContext) || (APP.state.context && APP.state.context.lessonContext) || null;
+    var pool = APP.TopicRetriever.findMisconceptions(lc);   /* R2：仅 lessonContext.misconceptionTopics 内 */
+    if(!pool.length){ APP.Toast.show('当前课题暂无适用的迷思概念','warn'); return; }   /* 无匹配：停止注入，不轮换全局 */
+    var mc=pool[sim.conceptIndex % pool.length];
     sim.conceptIndex++;
     /* 迷思概念作为状态机外部事件输入，由状态机决定反应 */
-    var intent = APP.StudentStateMachine.decide({ sim:sim, message:'', topic:APP.Simulator._topic(),
-      externalEvent:{ type:'misconception', kind:mc.term, text:mc.studentLine, sys:'学生抛出迷思概念：「'+mc.term+'」——请用科学表述纠正。' } });
+    var intent = APP.StudentStateMachine.decide({ sim:sim, message:'', lessonContext:lc, topic:APP.LessonContext.topicOf(sim),
+      externalEvent:{ type:'misconception', id:mc.id, topic:mc.topic, kind:mc.term, text:mc.studentLine, sys:'学生抛出迷思概念：「'+mc.term+'」——请用科学表述纠正。' } });
+    intent = APP.TopicRetriever.gate(intent, lc);
     sim.turn++;
     var r = APP.Simulator.renderIntent(sim, intent);
     if(r.sys) sim.messages.push({who:'sys', text:r.sys});
@@ -4076,14 +4727,20 @@ APP.act = {
     if((s.stage||'classroom')!=='classroom') return;
     s.stage='analyzing'; s.analysisPhase='working'; s.highlightIndex=null;
     APP.Store.save(APP.state); APP.render();
+    /* R5：stage=analyzing → SimAgentProvider.analyze（cloud 成功 src=cloud / 失败 src=local）→ stage=advice */
     setTimeout(function(){
-      var a=APP.state.context.sim; if(!a||a.stage!=='analyzing') return;
-      a.analysis=APP.SimAnalyzer.analyze(a);   /* 本地分析（R3），src 恒为 local */
-      a.analysisPhase='done';
-      a.stage='advice';
-      APP.Steps.set('simulate',APP.ST.REVIEW);
-      APP.Store.save(APP.state); APP.render();
-    },240);
+      var a=APP.state.context.sim; if(!a || a.stage!=='analyzing') return;
+      APP.SimAgentProvider.analyze(a, null, function(analysis, src){
+        var cur=APP.state.context.sim;
+        if(!cur || cur!==a || cur.stage!=='analyzing') return;
+        cur.analysis = analysis;
+        cur.analysis.src = src;   /* analysis 已带 src，再显式确认 */
+        cur.analysisPhase='done';
+        cur.stage='advice';
+        APP.Steps.set('simulate',APP.ST.REVIEW);
+        APP.Store.save(APP.state); APP.render();
+      });
+    }, 0);
   },
   /* F → C：回到课堂记录定位证据 */
   backToRecord:function(i){
@@ -4096,51 +4753,63 @@ APP.act = {
     s.stage='advice'; s.highlightIndex=null;
     APP.Store.save(APP.state); APP.render();
   },
-  /* F → G：开始再讲，进入既有 compare 流程 */
+  /* F → G：开始再讲，进入既有 compare 流程（原子式状态切换，一次 save + 一次 render） */
   startReteach:function(){
     var ctx=APP.state.context, s=ctx.sim, f='';
-    if(s&&s.analysis&&s.analysis.items&&s.analysis.items.length) f=s.analysis.items[0].next||'';
-    if(!f&&ctx.diagnosis&&ctx.diagnosis.priority) f=ctx.diagnosis.priority.action;
-    ctx.reteachFocus=f;                    /* 供 compare 顶部单行 banner 使用（R10） */
-    APP.Runner.approve('simulate');
+    /* 防重复点击：已进入 compare 且 simulate 已完成时，只 render，不重复转换状态 */
+    if(APP.state.meta.currentStep==='compare' && APP.Steps.get('simulate').status===APP.ST.DONE){
+      APP.render(); return;
+    }
+    if(s){
+      /* R7：使 sim 会话失效 + 中止未完成模拟请求（/api/simulate），防旧异步回调污染 compare */
+      s.sessionId = null;
+      if(s._abort){ try{ s._abort.abort(); }catch(e){} }
+      s._abort = null;
+      s.pending = false;
+      if(s.analysis&&s.analysis.items&&s.analysis.items.length) f=s.analysis.items[0].nextAction||s.analysis.items[0].next||'';
+    }
+    if(!f && ctx.diagnosis && ctx.diagnosis.priority) f=ctx.diagnosis.priority.action;
+    ctx.reteachFocus = f;                  /* 供 compare 顶部单行 banner 使用 */
+    ctx.reteachDimensionId = (ctx.diagnosis && ctx.diagnosis.priority && ctx.diagnosis.priority.dimensionId) || '';
+    /* 原子式：simulate=DONE + compare=READY + currentStep=compare，一次 save + 一次 render */
+    APP.Steps.set('simulate', APP.ST.DONE);
+    APP.Steps.set('compare', APP.ST.READY);
     APP.state.meta.currentStep='compare';
-    APP.Store.save(APP.state); APP.render();
+    APP.Store.save(APP.state);
+    APP.render();
+    APP.Toast.show('人工复核通过，进入下一步','ok');
   },
   loadReteach:function(){
-    var raw=APP.KB.sampleLesson.transcriptAfter;
-    var parsed=APP.Engine.parse(raw); parsed.raw=raw;
-    var title=APP.KB.sampleLesson.title;
-    var subject=APP.KB.sampleLesson.subject||'物理';
-    var grade=APP.KB.sampleLesson.grade||'';
-    APP.Toast.show('已载入改进后样例，正在分析重讲转写…','ok');
-    /* 重讲分析统一走 AgentProvider：在线走 /api/analyze，失败/离线回退本地（来源标注），不绕过 AI 通道 */
-    APP.AgentProvider.analyze(parsed, {subject:subject, grade:grade}, function(after, src){
-      after.title=title;
-      after.source=src||'local';
-      var before=APP.state.context.diagnosis;
-      APP.state.context.compare={ before:before, after:after };
-      APP.Steps.set('compare',APP.ST.REVIEW);
-      APP.state.meta.currentStep='compare';
+    /* R7：当前课题必须来自 lessonContext/lesson，禁止直接读 sampleLesson 作为当前课题 */
+    var lc = APP.state.context.lessonContext || (APP.state.context.lesson ? APP.LessonContext.build(APP.state.context.lesson) : null);
+    if(!lc){ APP.Toast.show('请先载入试讲课题','warn'); return; }
+    var sample = APP.KB.getReteachSample(lc);
+    if(!sample){ APP.Toast.show('当前课题暂无匹配改进样例，请手动粘贴重讲转写','warn'); return; }  /* 绝不降级到其它课题 */
+    APP.Toast.show('已载入「'+(lc.canonicalTopic||lc.title)+'」改进样例，正在分析重讲转写…','ok');
+    APP.act._ingestLessonVersion({ raw:sample.transcript, subject:lc.subject, grade:lc.grade, lessonId:lc.lessonId, title:(lc.canonicalTopic||lc.title) }, function(after, src){
+      var before = APP.state.context.diagnosis;
+      var dimensionId = (before && before.priority && before.priority.dimensionId) || '';
+      APP.state.context.compare = { before:before, after:after, lessonId:lc.lessonId, dimensionId:dimensionId };
+      APP.Steps.set('compare', APP.ST.REVIEW);
+      APP.state.meta.currentStep = 'compare';
       APP.Store.save(APP.state); APP.render();
-      APP.Toast.show(src==='cloud'?'云端分析完成，已生成前后对比':'云端不可用，已使用本地分析生成对比', src==='cloud'?'ok':'warn');
+      APP.Toast.show(src==='cloud'?'云端分析完成，已生成前后对比':'已使用本地分析生成对比', src==='cloud'?'ok':'ok');
     });
   },
   parseReteach:function(){
     var t=APP.U.el('reteachInput').value;
     if(!t.trim()){ APP.Toast.show('请先粘贴重讲转写稿','warn'); return; }
-    var parsed=APP.Engine.parse(t); parsed.raw=t;
-    if(!parsed.segments.length){ APP.Toast.show('未识别到有效内容','warn'); return; }
+    var lc = APP.state.context.lessonContext || (APP.state.context.lesson ? APP.LessonContext.build(APP.state.context.lesson) : null);
+    if(!lc){ APP.Toast.show('请先载入试讲课题','warn'); return; }
     APP.Toast.show('正在分析重讲转写…','ok');
-    /* 重讲分析统一走 AgentProvider（在线/失败/离线均由 provider 决定来源） */
-    APP.AgentProvider.analyze(parsed, {subject:((APP.state.context.lesson&&APP.state.context.lesson.subject)||'物理'), grade:''}, function(after, src){
-      after.title='重讲练习';
-      after.source=src||'local';
-      var before=APP.state.context.diagnosis;
-      APP.state.context.compare={ before:before, after:after };
-      APP.Steps.set('compare',APP.ST.REVIEW);
-      APP.state.meta.currentStep='compare';
+    APP.act._ingestLessonVersion({ raw:t, subject:lc.subject, grade:lc.grade, lessonId:lc.lessonId, title:'重讲练习' }, function(after, src){
+      var before = APP.state.context.diagnosis;
+      var dimensionId = (before && before.priority && before.priority.dimensionId) || '';
+      APP.state.context.compare = { before:before, after:after, lessonId:lc.lessonId, dimensionId:dimensionId };
+      APP.Steps.set('compare', APP.ST.REVIEW);
+      APP.state.meta.currentStep = 'compare';
       APP.Store.save(APP.state); APP.render();
-      APP.Toast.show(src==='cloud'?'云端分析完成，已生成前后对比':'云端不可用，已使用本地分析生成对比', src==='cloud'?'ok':'warn');
+      APP.Toast.show(src==='cloud'?'云端分析完成，已生成前后对比':'已使用本地分析生成对比', src==='cloud'?'ok':'ok');
     });
   },
   saveArchive:function(){
@@ -4192,7 +4861,9 @@ APP.act = {
 /* ===================== #region L4 路由与渲染 ===================== */
 APP.Router = {
   go:function(route){
-    APP.state.meta.currentStep = APP.STEPS.find(function(s){return s.route===route;})?APP.STEPS.find(function(s){return s.route===route;}).id:APP.state.meta.currentStep;
+    var target = APP.STEPS.find(function(s){return s.route===route;});
+    if(target) APP.state.meta.currentStep = target.id;
+    APP.Store.save(APP.state);   /* 路由切换同步持久化 currentStep */
     APP.render();
   }
 };
@@ -4200,6 +4871,10 @@ APP.Router = {
 APP.render = function(){
   var nav=APP.U.el('nav'); var view=APP.U.el('view'); var bar=APP.U.el('progressBar'); var rail=APP.U.el('agentrail');
   var cur=APP.state.meta.currentStep;
+  /* currentStep 无效时自动回退 home，避免渲染不存在步骤或空视图 */
+  if(cur!=='home' && !APP.STEPS.some(function(s){return s.id===cur;})){
+    cur='home'; APP.state.meta.currentStep='home';
+  }
   var isHome=(cur==='home');
   var ws=document.querySelector('.workspace');
   if(ws){ if(isHome){ ws.classList.add('home-mode'); } else { ws.classList.remove('home-mode'); } }
@@ -4228,9 +4903,9 @@ APP.render = function(){
 };
 
 /* ===================== #region L5 内联测试 ===================== */
-/* 修复：测试 IIFE 在脚本求值期立即执行，会触发 Toast 并污染状态 —— 测试期间静默提示，初始化尾部统一恢复 */
+/* 1a：测试改为懒执行（仅 ?test=1 或 localStorage 标记时由 runTests 触发），不再阻塞页面加载 */
 var _bootToast=APP.Toast.show; APP.Toast.show=function(){};
-APP.TESTS = (function(){
+APP.__buildTests = function(){
   var results=[];
   function ok(name, cond){ results.push({name:name, pass:!!cond}); }
   /* 1. 状态机流转 */
@@ -4294,8 +4969,9 @@ APP.TESTS = (function(){
     ok('状态机：StudentStateMachine 存在', typeof APP.StudentStateMachine==='object' && typeof APP.StudentStateMachine.decide==='function');
     ok('状态机：STATES/BEHAVIORS 定义齐全', APP.StudentStateMachine.STATES.length>=6 && APP.StudentStateMachine.BEHAVIORS.length>=5);
     var sim=APP.Simulator.make('xiaolin');
+    sim.lessonContext=APP.LessonContext.deepCopy(APP.LessonContext.build(APP.KB.sampleLesson));   /* R3：注入牛顿课题上下文 */
     var r=APP.Simulator.respond(sim,'力是维持物体运动的原因');
-    ok('模拟器：学生质疑迷思概念（含行为意图）', r.trigger==='迷思概念质疑' && r.intent && r.intent.behavior==='question');
+    ok('模拟器：学生质疑迷思概念（含行为意图）', r.trigger==='迷思概念质疑' && r.intent && r.intent.behavior==='question' && r.intent.lessonId===sim.lessonContext.lessonId);
     /* 4 人设行为倾向（人格只提供倾向，不绑定具体题） */
     ok('人设：4 人均含 behavior_bias', APP.KB.studentPersonas.length===4 && APP.KB.studentPersonas.every(function(p){ return p.behavior_bias && p.behavior_bias.question_type; }));
     ok('人设：小林=概念混淆/小李=生活直觉/小王=拓展/小陈=实验', (function(){ var m={}; APP.KB.studentPersonas.forEach(function(p){m[p.id]=p.behavior_bias.question_type;}); return m.xiaolin==='concept_confusion'&&m.xiaoli==='life_intuition'&&m.xiaowang==='extension'&&m.xiaochen==='experiment'; })());
@@ -4303,12 +4979,12 @@ APP.TESTS = (function(){
     var qs=APP.KB.studentQuestions;
     ok('题库：共 40 题且每题含 question_type', qs.length===40 && qs.every(function(q){return !!q.question_type;}));
     ok('题库：4 类 question_type 各 10 题', (function(){ var c={concept_confusion:0,life_intuition:0,extension:0,experiment:0}; qs.forEach(function(q){c[q.question_type]++;}); return c.concept_confusion===10&&c.life_intuition===10&&c.extension===10&&c.experiment===10; })());
-    ok('状态机：按 question_type 抽题（不按 persona_id 绑定）', (function(){ var s=APP.Simulator.make('xiaoli'); var q=APP.StudentStateMachine.pickQuestion(s,'life_intuition'); return q && q.question_type==='life_intuition'; })());
-    /* decide 输出合法意图（4 人设共享同一决策层） */
-    ok('状态机：decide 对教师提问输出合法 question_type', (function(){ var legal=['concept_confusion','life_intuition','extension','experiment']; var good=true; ['xiaolin','xiaoli','xiaowang','xiaochen'].forEach(function(id){ var s=APP.Simulator.make(id); var it=APP.StudentStateMachine.decide({sim:s, message:'同学们，谁能回答这个问题？', topic:'自由落体运动'}); good = good && legal.indexOf(it.question_type)>=0 && !!it.behavior && !!it.state; }); return good; })());
+    ok('状态机：按 question_type 抽题（课题相关，不按 persona_id 绑定）', (function(){ var lc=APP.LessonContext.build(APP.KB.sampleLesson); var s=APP.Simulator.make('xiaoli'); var q=APP.StudentStateMachine.pickQuestion(s,'life_intuition',lc); return q && q.question_type==='life_intuition' && q.topic==='牛顿第一定律'; })());
+    /* decide 输出合法意图（4 人设共享同一决策层，且课题相关） */
+    ok('状态机：decide 对教师提问输出合法且课题相关 question_type', (function(){ var legal=['concept_confusion','life_intuition','extension','experiment']; var lc=APP.LessonContext.build(APP.KB.sampleLesson); var good=true; ['xiaolin','xiaoli','xiaowang','xiaochen'].forEach(function(id){ var s=APP.Simulator.make(id); s.lessonContext=APP.LessonContext.deepCopy(lc); var it=APP.StudentStateMachine.decide({sim:s, message:'同学们，谁能回答这个问题？', topic:'牛顿第一定律'}); good = good && legal.indexOf(it.question_type)>=0 && !!it.behavior && !!it.state && (!it.question || it.question.topic==='牛顿第一定律'); }); return good; })());
     /* 突发事件/迷思概念作为外部事件输入 */
-    ok('状态机：突发事件外部事件输入 -> emergency 行为', (function(){ var s=APP.Simulator.make('xiaolin'); var it=APP.StudentStateMachine.decide({sim:s, message:'', topic:'自由落体运动', externalEvent:{type:'emergency', kind:'手机响', text:'（手机铃响）', sys:'突发事件：手机响'}}); return it.behavior==='emergency' && it.triggerLabel==='课堂突发'; })());
-    ok('状态机：迷思概念外部事件输入 -> question 行为', (function(){ var s=APP.Simulator.make('xiaolin'); var it=APP.StudentStateMachine.decide({sim:s, message:'', topic:'自由落体运动', externalEvent:{type:'misconception', kind:'重物下落快', text:'重物一定下落更快', sys:'迷思概念'}}); return it.behavior==='question' && it.triggerLabel==='迷思概念质疑'; })());
+    ok('状态机：突发事件外部事件输入 -> emergency 行为', (function(){ var s=APP.Simulator.make('xiaolin'); s.lessonContext=APP.LessonContext.deepCopy(APP.LessonContext.build(APP.KB.sampleLesson)); var it=APP.StudentStateMachine.decide({sim:s, message:'', topic:'牛顿第一定律', externalEvent:{type:'emergency', id:'ev2', kind:'演示失败', text:'（演示现象不明显）', sys:'突发事件：演示失败'}}); return it.behavior==='emergency' && it.triggerLabel==='课堂突发'; })());
+    ok('状态机：迷思概念外部事件输入 -> question 行为', (function(){ var s=APP.Simulator.make('xiaolin'); s.lessonContext=APP.LessonContext.deepCopy(APP.LessonContext.build(APP.KB.sampleLesson)); var it=APP.StudentStateMachine.decide({sim:s, message:'', topic:'牛顿第一定律', externalEvent:{type:'misconception', id:'mc_ai_001', topic:'力与运动的关系', kind:'力与运动的关系', text:'物体不动，就说明它不受力。', sys:'迷思概念'}}); return it.behavior==='question' && it.triggerLabel==='迷思概念质疑'; })());
   })();
   /* 9. 板书标记解析与新增迷思概念 */
   (function(){
@@ -4735,6 +5411,7 @@ APP.TESTS = (function(){
   /* 31. Reteach：载入改进后样例使用 AgentProvider.analyze */
   (function(){
     APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+    APP.state.context.lessonContext=APP.LessonContext.build(APP.KB.sampleLesson);   /* R7：需先有当前课题上下文 */
     APP.state.context.diagnosis=APP.Engine.diagnose(APP.Engine.parse(APP.KB.sampleLesson.transcriptBefore));
     var savedMode=APP.state.meta.mode, savedFetch=window.fetch, savedActive=APP.AgentProvider.active;
     APP.state.meta.mode='online'; APP.AgentProvider.setActive('cloud');
@@ -4751,6 +5428,7 @@ APP.TESTS = (function(){
   /* 32. Reteach：cloud失败后仍生成 compare */
   (function(){
     APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+    APP.state.context.lessonContext=APP.LessonContext.build(APP.KB.sampleLesson);   /* R7 */
     APP.state.context.diagnosis=APP.Engine.diagnose(APP.Engine.parse(APP.KB.sampleLesson.transcriptBefore));
     var savedMode=APP.state.meta.mode, savedFetch=window.fetch, savedActive=APP.AgentProvider.active;
     APP.state.meta.mode='online'; APP.AgentProvider.setActive('cloud');
@@ -4772,10 +5450,383 @@ APP.TESTS = (function(){
     ok('Radar：雷达数据源恒为 5 维且 name/score 完整', radarClean, 'radar.length='+radar.length);
     ok('Radar：页面渲染包含首末维度名', html.indexOf('教师基本素养')>=0 && html.indexOf('思维与育人表现')>=0);
   })();
+  /* 34. R1：LessonContext 单一事实源 */
+  (function(){
+    var REQ=['lessonId','title','subject','grade','canonicalTopic','aliases','keyConcepts','misconceptionTopics','questionPoolId','eventProfile','source','raw','parsed'];
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+
+    /* 34.1 载入牛顿第一定律 demo → canonicalTopic 正确 */
+    APP.act.loadSample('demo');
+    var lc=APP.state.context.lessonContext;
+    ok('R1：载入样例产出 lessonContext', !!lc);
+    ok('R1：牛顿第一定律 canonicalTopic === 牛顿第一定律', !!lc && lc.canonicalTopic==='牛顿第一定律');
+    ok('R1：lessonContext 含 13 个必备字段', !!lc && REQ.every(function(k){ return Object.prototype.hasOwnProperty.call(lc,k); }));
+    ok('R1：topicIndex 命中时 misconceptionTopics 来自索引', !!lc && Array.isArray(lc.misconceptionTopics) && lc.misconceptionTopics.length>0);
+    ok('R1：topicIndex 命中时 questionPoolId 指向课题专属池', !!lc && lc.questionPoolId==='lesson-牛顿第一定律');
+
+    /* 34.2 上传未知课题 X → 不读旧 demo topic、不发明课题 */
+    APP.state.context.lesson={ title:'量子纠缠', subject:'物理', grade:'', raw:'[00:00] 同学们好，今天我们讲量子纠缠。', source:'upload' };
+    APP.state.context.lesson.parsed=APP.Engine.parse(APP.state.context.lesson.raw);
+    APP.LessonContext.apply(APP.state.context.lesson);
+    var lc2=APP.state.context.lessonContext;
+    ok('R1：未知课题 canonicalTopic=标题（不发明）', lc2.canonicalTopic==='量子纠缠');
+    ok('R1：未知课题 misconceptionTopics 为空（不发明）', Array.isArray(lc2.misconceptionTopics) && lc2.misconceptionTopics.length===0);
+    var sim=APP.Simulator.make('xiaolin');
+    ok('R1：session 深拷贝 lessonContext 且非同一引用', !!sim.lessonContext && sim.lessonContext.canonicalTopic==='量子纠缠' && sim.lessonContext!==lc2);
+    ok('R1：simulate 读取当前课题（非旧 demo topic）', APP.Simulator._topic(sim)==='量子纠缠');
+    ok('R1：respond 从 sim.lessonContext 读取课题', (function(){ APP.Simulator.respond(sim,'同学们，什么是量子纠缠？'); return sim.lessonContext.canonicalTopic==='量子纠缠'; })());
+
+    /* 34.3 切换课题后旧 sim 自动失效 */
+    APP.state.context.sim=sim;
+    APP.act.loadSample('demo');   /* 切回牛顿第一定律 demo */
+    ok('R1：切换课题后旧 sim 自动失效', APP.state.context.sim===null);
+
+    /* 34.4 旧 session 恢复：缺 lessonContext 时从 context.lesson 重建（不碰全局 sampleLesson） */
+    APP.state.context.lessonContext=null;
+    APP.state.context.sim=null;
+    APP.LessonContext.ensure();
+    ok('R1：缺 lessonContext 时从 lesson 重建', !!APP.state.context.lessonContext && APP.state.context.lessonContext.canonicalTopic==='牛顿第一定律');
+
+    /* 34.5 重讲案例：产出 compare 且 lessonId 与当前课题一致（R7 语义） */
+    APP.state.context.diagnosis=APP.Engine.diagnose(APP.Engine.parse(APP.KB.sampleLesson.transcriptBefore));
+    APP.act.loadReteach();
+    ok('R1：载入重讲案例产出 compare（lessonId 一致）', !!APP.state.context.compare && !!APP.state.context.compare.after && APP.state.context.compare.lessonId===APP.state.context.lessonContext.lessonId);
+
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+  })();
+  /* 35. R2：TopicRetriever 课题相关检索层 + 硬门 */
+  (function(){
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+
+    /* 牛顿第一定律 lessonContext */
+    var lcN = APP.LessonContext.build(APP.KB.sampleLesson);
+    ok('R2：牛顿第一定律 misconceptionTopics 来自索引', lcN.misconceptionTopics.length>0);
+
+    /* 35.1 牛顿第一定律 × 4 persona：不得出现电路/凸透镜/温度计/天平/液体压强等跨课题内容 */
+    var BANNED=['电路','凸透镜','温度计','天平','液体压强'];
+    var personaLc={};
+    ['xiaolin','xiaoli','xiaowang','xiaochen'].forEach(function(id){ personaLc[id]=APP.LessonContext.deepCopy(lcN); });
+    var qOk=true, qDetail='';
+    ['xiaolin','xiaoli','xiaowang','xiaochen'].forEach(function(id){
+      var qs=APP.TopicRetriever.findQuestions(personaLc[id], APP.KB.studentPersonas.filter(function(p){return p.id===id;})[0], null);
+      qs.forEach(function(q){
+        var bad=BANNED.filter(function(b){ return q.question.indexOf(b)>=0 || q.topic.indexOf(b)>=0; });
+        if(bad.length){ qOk=false; qDetail+=id+':'+q.topic+'>'+bad.join('/')+' | '; }
+        if(q.topic!=='牛顿第一定律'){ qOk=false; qDetail+=id+':topic='+q.topic+' | '; }
+      });
+    });
+    ok('R2：牛顿第一定律×4 人设无跨课题题目', qOk, qDetail||'all clean');
+
+    /* 迷思：牛顿第一定律只能注入 力与运动/惯性大小/摩擦力 */
+    var mcN=APP.TopicRetriever.findMisconceptions(lcN);
+    ok('R2：牛顿迷思仅限 misconceptionTopics', mcN.length>0 && mcN.every(function(m){ return lcN.misconceptionTopics.indexOf(m.topic)>=0; }));
+    ok('R2：牛顿迷思不含 浮力/压强/电流 等', mcN.every(function(m){ return ['浮力','压强','电流','光的传播','电压','重力'].indexOf(m.topic)<0; }));
+
+    /* 事件：牛顿第一定律禁止 电压表/灯泡电路 等电路专属事件 */
+    var evN=APP.TopicRetriever.findEvents(lcN, null);
+    ok('R2：牛顿事件不含电路专属事件', evN.length>0 && evN.every(function(e){ return ['电压表','灯泡','电路','电池','变阻器','酒精灯','光速'].every(function(b){ return e.text.indexOf(b)<0; }); }), evN.map(function(e){return e.kind;}).join(','));
+
+    /* 35.2 自由落体：不得出现牛顿第二定律专属提问 */
+    var lcF = APP.LessonContext.build({ title:'自由落体运动', subject:'物理', grade:'', raw:'', source:'sample' });
+    ok('R2：自由落体 canonicalTopic 正确', lcF.canonicalTopic==='自由落体运动');
+    var qF=APP.TopicRetriever.findQuestions(lcF, null, null);
+    ok('R2：自由落体无牛顿第二定律专属提问', qF.every(function(q){ return q.topic.indexOf('牛顿第二定律')<0; }), 'count='+qF.length);
+
+    /* 35.3 多普勒效应：不得出现机械能守恒题 */
+    var lcD = APP.LessonContext.build({ title:'多普勒效应', subject:'物理', grade:'', raw:'', source:'sample' });
+    var qD=APP.TopicRetriever.findQuestions(lcD, null, null);
+    ok('R2：多普勒效应无机械能守恒题', qD.every(function(q){ return q.topic.indexOf('机械能')<0; }), 'count='+qD.length);
+
+    /* 35.4 未知自定义课题：允许安全通用回应，但不得随机抓题 */
+    var lcX = APP.LessonContext.build({ title:'量子纠缠', subject:'物理', grade:'', raw:'[00:00] 今天我们讲量子纠缠。', source:'upload' });
+    ok('R2：未知课题 canonicalTopic=标题', lcX.canonicalTopic==='量子纠缠');
+    var qX=APP.TopicRetriever.findQuestions(lcX, null, null);
+    ok('R2：未知课题无候选题目（不随机抓题）', qX.length===0);
+    var simX=APP.Simulator.make('xiaolin'); simX.lessonContext=APP.LessonContext.deepCopy(lcX);
+    var rX=APP.Simulator.respond(simX,'同学们，什么是量子纠缠？');
+    ok('R2：未知课题返回 safe_generic 安全通用回应', !!rX.intent && rX.intent.safe_generic===true && rX.intent.question===null);
+    ok('R2：未知课题回应不含任何跨课题知识题', !rX.text || BANNED.every(function(b){ return rX.text.indexOf(b)<0; }));
+
+    /* 35.5 硬门：跨课题 intent 被拦截 */
+    var badIntent={ behavior:'question', question_type:'experiment', state:'excited', question:{ id:'x', topic:'电路', question:'老师，灯泡为什么不亮？' }, topic:'电路', text:'老师，灯泡为什么不亮？' };
+    ok('R2：硬门拦截跨课题 intent', APP.TopicRetriever.isRelevant(badIntent, lcN)===false && APP.TopicRetriever.gate(badIntent, lcN).safe_generic===true);
+
+    /* 35.6 旧事件无适用范围字段时按 generic=false 处理（不相关） */
+    var legacyEvent={ id:'legacy', text:'打翻器材', kind:'操作事故' };
+    ok('R2：无适用范围字段的旧事件默认不相关', APP.TopicRetriever.isRelevant(legacyEvent, lcN)===false);
+
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+  })();
+  /* 36. R3：StudentStateMachine × Persona × LessonContext 耦合 */
+  (function(){
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+    var lc=APP.LessonContext.build(APP.KB.sampleLesson);   /* 牛顿第一定律 */
+    var personas=['xiaolin','xiaoli','xiaowang','xiaochen'];
+    var dominants={ xiaolin:'concept_confusion', xiaoli:'life_intuition', xiaowang:'extension', xiaochen:'experiment' };
+
+    var origRandom=Math.random; Math.random=function(){ return 0; };
+    var results=personas.map(function(id){
+      var sim=APP.Simulator.make(id);
+      sim.lessonContext=APP.LessonContext.deepCopy(lc);
+      var it=APP.StudentStateMachine.decide({ sim:sim, message:'同学们，谁能回答这个问题？', lessonContext:lc, topic:'牛顿第一定律' });
+      return { id:id, intent:it };
+    });
+    Math.random=origRandom;
+
+    ok('R3：四 persona 意图 topic 全部合法', results.every(function(r){ return APP.TopicRetriever.isRelevant(r.intent, lc)===true && r.intent.topic==='牛顿第一定律'; }), results.map(function(r){return r.intent.topic;}).join(','));
+    ok('R3：四 persona 意图携带 lessonId', results.every(function(r){ return r.intent.lessonId===lc.lessonId; }));
+    ok('R3：四 persona 意图携带 sourceCandidateId', results.every(function(r){ return !!r.intent.sourceCandidateId && !!r.intent.question; }));
+    ok('R3：四 persona question_type 各为其主导类型', results.every(function(r){ return r.intent.question_type===dominants[r.id]; }), results.map(function(r){return r.id+':'+r.intent.question_type;}).join(','));
+    ok('R3：四 persona 文本内容明显差异', (function(){ var seen={}, ok=true; results.forEach(function(r){ if(seen[r.intent.text]) ok=false; seen[r.intent.text]=1; }); return ok; })());
+    ok('R3：小王未强制超纲（题目仍属本课题）', results.filter(function(r){return r.id==='xiaowang';})[0].intent.question.topic==='牛顿第一定律');
+
+    /* 无候选时不跨课题检索（未知课题 → 安全通用） */
+    var lcX=APP.LessonContext.build({ title:'量子纠缠', subject:'物理', grade:'', raw:'', source:'upload' });
+    var sX=APP.Simulator.make('xiaowang'); sX.lessonContext=APP.LessonContext.deepCopy(lcX);
+    var itX=APP.StudentStateMachine.decide({ sim:sX, message:'同学们，谁能回答这个问题？', lessonContext:lcX, topic:'量子纠缠' });
+    ok('R3：无候选时返回 safe_generic（不跨课题检索）', itX.safe_generic===true && itX.question===null && itX.topic==='量子纠缠');
+
+    /* 外部事件合法性：跨课题迷思事件被拦截 */
+    var sM=APP.Simulator.make('xiaolin'); sM.lessonContext=APP.LessonContext.deepCopy(lc);
+    var itM=APP.StudentStateMachine.decide({ sim:sM, message:'', lessonContext:lc, topic:'牛顿第一定律',
+      externalEvent:{ type:'misconception', id:'mc_ai_006', topic:'浮力', kind:'浮力', text:'重的物体下沉。', sys:'学生抛出迷思概念：「浮力」——请用科学表述纠正。' } });
+    ok('R3：跨课题迷思外部事件被 gate 拦截', itM.safe_generic===true && itM.question===null);
+
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+  })();
+  /* 37. R4：云端模拟学生稳定性（同步可测部分；完整 7 场景见 _r4_mock.mjs） */
+  (function(){
+    function T(v){ return { then:function(fn){ var r; try{ r=fn(v); }catch(e){ return {then:function(){return this;},catch:function(c){c(e);return this;}}; } return (r&&typeof r.then==='function')?r:T(r); }, catch:function(){ return this; } }; }
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+
+    var s0=APP.Simulator.make('xiaolin');
+    ok('R4：make 生成 sessionId/requestSeq/lastCloudError/pending', !!s0.sessionId && s0.requestSeq===0 && s0.lastCloudError===null && s0.pending===false);
+
+    /* offline 完全不请求 /api/simulate */
+    var savedFetch=window.fetch, savedMode=APP.state.meta.mode, savedActive=APP.AgentProvider.active;
+    var fetchCalled=false;
+    window.fetch=function(){ fetchCalled=true; return T({ ok:true, json:function(){ return T({text:'x'}); } }); };
+    APP.state.meta.mode='offline';
+    var s1=APP.Simulator.make('xiaolin'); s1.stage='classroom';
+    var src1=null;
+    APP.Simulator.respondRemote(s1,'你好',function(r,src){ src1=src; });
+    ok('R4：offline 不请求 /api/simulate', fetchCalled===false && src1==='local' && s1.pending===false && s1.requestSeq===0);
+
+    /* online：请求 body 包含必备字段 + 200 成功 + pending/seq 清理 */
+    APP.state.meta.mode='online'; APP.AgentProvider.setActive('cloud');
+    APP.state.context.lessonContext=APP.LessonContext.build(APP.KB.sampleLesson);
+    var s2=APP.Simulator.make('xiaolin'); s2.stage='classroom';
+    APP.state.context.sim=s2;
+    var captured=null;
+    window.fetch=function(url,opts){ captured=opts; return T({ ok:true, json:function(){ return T({ text:'云端回应', sys:null, trigger:'云端互动' }); } }); };
+    var src2=null, txt2=null;
+    APP.Simulator.respondRemote(s2,'大家理解了吗？',function(r,src){ src2=src; txt2=r.text; });
+    var body=null; try{ body=JSON.parse(captured.body); }catch(e){}
+    var hasFields = body && ['lessonId','topic','aliases','subject','grade','personaId','personaName','personaStyle','history','message','intent'].every(function(k){ return Object.prototype.hasOwnProperty.call(body,k); });
+    ok('R4：online 请求 body 包含必备字段', hasFields);
+    ok('R4：200 成功 source=cloud 且 pending/seq 正确', src2==='cloud' && !!txt2 && s2.pending===false && s2.requestSeq===1 && s2.lastCloudError===null && !!s2.sessionId);
+
+    window.fetch=savedFetch; APP.state.meta.mode=savedMode; APP.AgentProvider.setActive(savedActive);
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+  })();
+  /* 38. R5：模拟课堂 AI 分析 provider */
+  (function(){
+    function T(v){ return { then:function(fn){ var r; try{ r=fn(v); }catch(e){ return {then:function(){return this;},catch:function(c){c(e);return this;}}; } return (r&&typeof r.then==='function')?r:T(r); }, catch:function(){ return this; } }; }
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+
+    ok('R5：SimAgentProvider 存在', !!APP.SimAgentProvider && typeof APP.SimAgentProvider.analyze==='function' && typeof APP.SimAgentProvider.validate==='function');
+
+    /* offline → local */
+    var sOff=APP.Simulator.make('xiaolin');
+    sOff.messages=[{who:'teacher',text:'为什么惯性越大越难停下来？'},{who:'student',text:'老师我不明白'}];
+    var srcOff=null;
+    APP.SimAgentProvider.analyze(sOff, null, function(r,src){ srcOff=src; });
+    ok('R5：offline 分析 src=local', srcOff==='local');
+
+    /* buildPayload 必备字段 */
+    var lcN=APP.LessonContext.build(APP.KB.sampleLesson);
+    APP.state.context.lessonContext=lcN;
+    var sP=APP.Simulator.make('xiaolin'); sP.lessonContext=APP.LessonContext.deepCopy(lcN);
+    sP.messages=[{who:'teacher',text:'hello'},{who:'student',text:'hi'}];
+    var pl=APP.SimAgentProvider.buildPayload(sP);
+    ok('R5：payload 含 lessonContext/persona/trainingFocus/messages/events', !!pl && !!pl.lessonContext && !!pl.persona && Object.prototype.hasOwnProperty.call(pl,'trainingFocus') && Array.isArray(pl.messages) && Array.isArray(pl.events));
+
+    /* normalize 本地 + validate 越界/合法 */
+    var localAn=APP.SimAnalyzer.analyze(sP);
+    var nLocal=APP.SimAgentProvider.normalize(localAn,'local');
+    ok('R5：normalize 本地 → 统一结构', nLocal.src==='local' && nLocal.items.length===localAn.items.length && nLocal.items.every(function(it){ return Array.isArray(it.evidenceIndices) && typeof it.nextAction==='string' && typeof it.observation==='string'; }));
+    var badD={summary:'x', items:[{id:'a',title:'t',evidenceIndices:[999],observation:'o',impact:'i',nextAction:'n'}]};
+    var goodD={summary:'x', items:[{id:'a',title:'t',evidenceIndices:[0,1],observation:'o',impact:'i',nextAction:'n'}]};
+    ok('R5：validate 拒绝越界 evidenceIndices', APP.SimAgentProvider.validate(badD, sP).ok===false);
+    ok('R5：validate 接受合法 evidenceIndices', APP.SimAgentProvider.validate(goodD, sP).ok===true);
+
+    /* cloud 成功 + 分析随真实输入变化 */
+    var savedMode=APP.state.meta.mode, savedFetch=window.fetch, savedActive=APP.AgentProvider.active;
+    APP.state.meta.mode='online'; APP.AgentProvider.setActive('cloud');
+    function mkSim(t0){ var s=APP.Simulator.make('xiaolin'); s.stage='classroom'; s.lessonContext=APP.LessonContext.deepCopy(lcN); s.messages=[{who:'teacher',text:t0},{who:'student',text:'明白了。'},{who:'teacher',text:'好，我们继续。'}]; return s; }
+    var simA=mkSim('同学们，力是维持物体运动的原因，对吗？');
+    var simB=mkSim('同学们，力是改变物体运动状态的原因，请记好。');
+    window.fetch=function(url,opts){
+      var body=JSON.parse(opts.body);
+      var lastT=body.messages.slice().reverse().filter(function(m){return m.who==='teacher';})[0];
+      var cloud={ summary:'课堂共 '+body.messages.length+' 条，最后教师说：'+(lastT?lastT.text.slice(0,8):''),
+                  items:[{ id:'it1', title:'围绕训练目标改进', evidenceIndices:[0], observation:'教师第 0 条：'+body.messages[0].text.slice(0,8), impact:'影响课堂节奏', nextAction:'下次先提问再候答' }] };
+      return T({ status:200, ok:true, json:function(){ return T(cloud); } });
+    };
+    var resA=null, resB=null;
+    APP.SimAgentProvider.analyze(simA, null, function(r,src){ resA={src:src, summary:r.summary, obs:r.items[0].observation}; });
+    APP.SimAgentProvider.analyze(simB, null, function(r,src){ resB={src:src, summary:r.summary, obs:r.items[0].observation}; });
+    ok('R5：cloud 成功 src=cloud', !!resA && resA.src==='cloud' && !!resB && resB.src==='cloud');
+    ok('R5：cloud 分析随真实输入变化', !!resA && !!resB && (resA.summary!==resB.summary || resA.obs!==resB.obs), JSON.stringify({A:resA&&resA.summary,B:resB&&resB.summary}));
+
+    /* cloud 失败 → local fallback */
+    window.fetch=function(){ throw new Error('HTTP 500'); };
+    var simC=mkSim('大家好');
+    var srcC=null;
+    APP.SimAgentProvider.analyze(simC, null, function(r,src){ srcC=src; });
+    ok('R5：cloud 失败 fallback src=local', srcC==='local');
+
+    window.fetch=savedFetch; APP.state.meta.mode=savedMode; APP.AgentProvider.setActive(savedActive);
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+  })();
+  /* 39. R6：统一试讲输入与诊断链 */
+  (function(){
+    function T(v){ return { then:function(fn){ var r; try{ r=fn(v); }catch(e){ return {then:function(){return this;},catch:function(c){c(e);return this;}}; } return (r&&typeof r.then==='function')?r:T(r); }, catch:function(){ return this; } }; }
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+
+    ok('R6：_ingestLesson/_requestDiagnosis 存在', typeof APP.act._ingestLesson==='function' && typeof APP.act._requestDiagnosis==='function');
+
+    /* demo 牛顿第一定律（离线） */
+    APP.act.loadSample('demo');
+    ok('R6：demo lesson.title', APP.state.context.lesson.title==='牛顿第一定律');
+    ok('R6：demo lessonContext.canonicalTopic', APP.state.context.lessonContext.canonicalTopic==='牛顿第一定律');
+    ok('R6：demo diagnosis.title 来自 lesson（非 sampleLesson 兜底）', APP.state.context.diagnosis.title==='牛顿第一定律');
+    ok('R6：demo diagnosis 含 src=local + requestId', APP.state.context.diagnosis.src==='local' && !!APP.state.context.diagnosis.requestId);
+
+    /* 载入自定义课题 */
+    APP.act._ingestLesson({ title:'量子纠缠', subject:'物理', grade:'高一', raw:'[00:00] 同学们好，今天我们讲量子纠缠。', source:'upload' });
+    ok('R6：自定义 lesson.title/grade', APP.state.context.lesson.title==='量子纠缠' && APP.state.context.lesson.grade==='高一');
+    ok('R6：自定义 lessonContext.canonicalTopic/grade', APP.state.context.lessonContext.canonicalTopic==='量子纠缠' && APP.state.context.lessonContext.grade==='高一');
+    ok('R6：自定义 diagnosis.title 来自 lesson', APP.state.context.diagnosis.title==='量子纠缠');
+
+    /* offline 不请求 /api/analyze */
+    var savedFetch=window.fetch, savedMode=APP.state.meta.mode, savedActive=APP.AgentProvider.active;
+    var fetchCalled=false;
+    window.fetch=function(){ fetchCalled=true; return T({ ok:true, json:function(){ return T({}); } }); };
+    APP.state.meta.mode='offline'; APP.AgentProvider.setActive('offline');
+    APP.act._ingestLesson({ title:'离线课题', subject:'物理', grade:'', raw:'[00:00] 大家好', source:'pasted' });
+    ok('R6：offline 不请求 /api/analyze', fetchCalled===false && APP.state.context.diagnosis.src==='local');
+
+    /* online 请求携带真实 subject/grade */
+    APP.state.meta.mode='online'; APP.AgentProvider.setActive('cloud');
+    var capturedBody=null;
+    window.fetch=function(url,opts){ capturedBody=JSON.parse(opts.body); return T({ ok:true, json:function(){ return T(APP.Engine.diagnose(APP.Engine.parse('[00:00] 大家好'))); } }); };
+    APP.act._ingestLesson({ title:'在线课题', subject:'物理', grade:'高二', raw:'[00:00] 大家好', source:'pasted' });
+    ok('R6：online 请求携带真实 subject/grade', !!capturedBody && capturedBody.subject==='物理' && capturedBody.grade==='高二', JSON.stringify(capturedBody&&{s:capturedBody.subject,g:capturedBody.grade}));
+    ok('R6：cloud 成功后 diagnosis.src=cloud', APP.state.context.diagnosis.src==='cloud');
+
+    window.fetch=savedFetch; APP.state.meta.mode=savedMode; APP.AgentProvider.setActive(savedActive);
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+  })();
+  /* 40. R7：重讲与对比链 */
+  (function(){
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+
+    /* getReteachSample：牛顿第一定律命中，其它课题返回 null（绝不降级） */
+    var lcN=APP.LessonContext.build(APP.KB.sampleLesson);
+    var sN=APP.KB.getReteachSample(lcN);
+    ok('R7：牛顿第一定律命中改进样例', !!sN && sN.title==='牛顿第一定律');
+    var sF=APP.KB.getReteachSample(APP.LessonContext.build({title:'自由落体运动', subject:'物理', grade:'', raw:'', source:'sample'}));
+    ok('R7：自由落体命中改进样例（R12 补数据）', !!sF && sF.title==='自由落体运动' && typeof sF.transcript==='string' && sF.transcript.length>0);
+    ok('R7：未知课题无改进样例 → null', APP.KB.getReteachSample(APP.LessonContext.build({title:'量子纠缠', subject:'物理', grade:'', raw:'', source:'upload'}))===null);
+
+    /* compare 首讲/重讲/focus 同 lessonId */
+    APP.act.loadSample('demo');
+    var beforeLessonId=APP.state.context.lessonContext.lessonId;
+    var beforeDim=APP.state.context.diagnosis.priority.dimensionId;
+    APP.act.loadReteach();
+    var c=APP.state.context.compare;
+    ok('R7：compare 生成', !!c && !!c.before && !!c.after);
+    ok('R7：compare before.lessonId 同当前课题', !!c && c.before.lessonId===beforeLessonId);
+    ok('R7：compare after.lessonId 同当前课题', !!c && c.after.lessonId===beforeLessonId);
+    ok('R7：compare.lessonId 同当前课题', !!c && c.lessonId===beforeLessonId);
+    ok('R7：compare 共享同一 dimensionId（训练维度）', !!c && c.dimensionId===beforeDim && c.before.priority.dimensionId===beforeDim);
+
+    /* 无匹配样例时 loadReteach 不生成 compare（明确状态，不降级）——用未知课题验证 */
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+    APP.act._ingestLesson({ title:'量子纠缠', subject:'物理', grade:'', raw:'[00:00] 今天我们讲量子纠缠。', source:'sample' });
+    APP.act.loadReteach();
+    ok('R7：无匹配样例时 compare 不生成', !APP.state.context.compare);
+
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+  })();
+  /* 42. R13：Step3→Step4 原子式切换 + 状态机链路回归 */
+  (function(){
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+
+    /* 测试1：Step 3 → Step 4 原子式切换 */
+    APP.act.loadSample('demo');
+    APP.act.startDiagnose();
+    APP.act.approve('diagnose');
+    APP.state.context.sim = { stage:'advice', analysis:{src:'local',summary:'x',items:[{title:'t',nextAction:'候答'}]}, messages:[{who:'teacher',text:'hi'}], persona:{id:'xiaolin',name:'小林'}, sessionId:'sim-old', requestSeq:1, pending:false };
+    APP.Steps.set('simulate', APP.ST.REVIEW);
+    APP.Steps.set('compare', APP.ST.LOCKED);
+    APP.state.meta.currentStep = 'simulate';
+    APP.act.startReteach();
+    ok('R13：startReteach 后 currentStep=compare', APP.state.meta.currentStep==='compare');
+    ok('R13：startReteach 后 simulate=done', APP.Steps.get('simulate').status===APP.ST.DONE);
+    ok('R13：startReteach 后 compare 解锁', APP.Steps.get('compare').status!==APP.ST.LOCKED);
+
+    /* 测试2：重复点击开始再讲不倒退、不重复转换 */
+    APP.act.startReteach();
+    APP.act.startReteach();
+    ok('R13：重复 startReteach 不倒退', APP.state.meta.currentStep==='compare' && APP.Steps.get('simulate').status===APP.ST.DONE);
+
+    /* 测试3：返回首页后继续训练进入 compare */
+    APP.act.goHome();
+    APP.Steps.set('collect', APP.ST.DONE);
+    APP.Steps.set('diagnose', APP.ST.DONE);
+    APP.Steps.set('simulate', APP.ST.DONE);
+    APP.Steps.set('compare', APP.ST.READY);
+    APP.state.meta.currentStep = 'home';
+    APP.act.startTraining();
+    ok('R13：继续训练进入 compare', APP.state.meta.currentStep==='compare');
+
+    /* 测试4：新一轮保留 archive，重置五步 */
+    APP.state.context.archive = [{ts:'x', title:'t', before:null, after:null, focus:null}];
+    APP.act.nextRound();
+    ok('R13：nextRound 后 currentStep=home', APP.state.meta.currentStep==='home');
+    ok('R13：nextRound 后 collect=ready', APP.Steps.get('collect').status===APP.ST.READY);
+    ok('R13：nextRound 后 diagnose/simulate/compare 锁定', APP.Steps.get('diagnose').status===APP.ST.LOCKED && APP.Steps.get('simulate').status===APP.ST.LOCKED && APP.Steps.get('compare').status===APP.ST.LOCKED);
+    ok('R13：nextRound 保留 archive', Array.isArray(APP.state.context.archive) && APP.state.context.archive.length===1);
+
+    /* 测试5：clearLesson 无旧 simulate/compare 残留 */
+    APP.state.context.sim = {stage:'advice'};
+    APP.Steps.set('simulate', APP.ST.DONE);
+    APP.Steps.set('compare', APP.ST.READY);
+    APP.act.clearLesson();
+    ok('R13：clearLesson 后 simulate/compare 锁定', APP.Steps.get('simulate').status===APP.ST.LOCKED && APP.Steps.get('compare').status===APP.ST.LOCKED);
+    ok('R13：clearLesson 后无 sim/compare 残留', !APP.state.context.sim && !APP.state.context.compare);
+
+    /* 测试6：异步旧请求污染防护（session 失效 → 旧回调被 stale 拦截） */
+    APP.act.loadSample('demo');
+    APP.act.startDiagnose();
+    APP.act.approve('diagnose');
+    APP.state.context.sim = { stage:'classroom', persona:{id:'xiaolin',name:'小林'}, messages:[], eventQueue:[], focus:null, lessonContext:APP.state.context.lessonContext, sessionId:'sim-stale', requestSeq:1, pending:true };
+    APP.Steps.set('simulate', APP.ST.REVIEW);
+    APP.act.startReteach();
+    ok('R13：进入 compare 后 currentStep=compare', APP.state.meta.currentStep==='compare');
+    ok('R13：startReteach 使旧 session 失效（sessionId=null）', APP.state.context.sim.sessionId===null);
+    ok('R13：startReteach 关闭 pending', APP.state.context.sim.pending===false);
+
+    APP.state=APP.Store.fresh(); APP.Store._initSteps(APP.state);
+  })();
   return results;
-})();
+};
+APP.TESTS = null;
 
 APP.runTests = function(){
+  if(!APP.TESTS) APP.TESTS = APP.__buildTests();
   var pass=APP.TESTS.filter(function(t){return t.pass;}).length;
   return { total:APP.TESTS.length, pass:pass, results:APP.TESTS };
 };
@@ -4844,10 +5895,91 @@ APP.CustomCursor = (function(){
   };
 })();
 
+/* ===== 首页交互质感层（仅首页生效；事件委托，兼容动态重渲染；零依赖） ===== */
+APP.HomeFx = (function(){
+  function mq(q){ try{ return !!(window.matchMedia && window.matchMedia(q).matches); }catch(e){ return false; } }
+  function reduced(){ return mq('(prefers-reduced-motion: reduce)'); }
+  function finePointer(){ return mq('(hover:hover) and (pointer:fine)'); }
+
+  var halo=null, raf=0, started=false;
+  var tx=0, ty=0, hx=0, hy=0, s=1, ts=1;
+
+  function inHome(t){
+    /* 目标位于当前主视图且处于首页模式 */
+    return !!(t && t.closest && t.closest('#view') && document.querySelector('.workspace.home-mode'));
+  }
+
+  function spawnRipple(btn, e){
+    var r=btn.getBoundingClientRect();
+    var d=Math.max(r.width, r.height)*2.1;
+    var x=(e.clientX-r.left)-d/2, y=(e.clientY-r.top)-d/2;
+    var el=document.createElement('span');
+    el.className='cta-ripple';
+    el.style.width=el.style.height=d+'px';
+    el.style.left=x+'px'; el.style.top=y+'px';
+    el.setAttribute('aria-hidden','true');
+    btn.appendChild(el);
+    var done=function(){ if(el.parentNode) el.parentNode.removeChild(el); };
+    el.addEventListener('animationend', done);
+    setTimeout(done, 900); /* 兜底清理 */
+  }
+
+  function spawnRing(x, y){
+    var el=document.createElement('span');
+    el.className='home-click-ring';
+    el.style.left=x+'px'; el.style.top=y+'px';
+    el.setAttribute('aria-hidden','true');
+    document.body.appendChild(el);
+    var done=function(){ if(el.parentNode) el.parentNode.removeChild(el); };
+    el.addEventListener('animationend', done);
+    setTimeout(done, 800); /* 兜底清理 */
+  }
+
+  function loop(){
+    raf=requestAnimationFrame(loop);
+    if(!halo) return;
+    var k=reduced()?1:.22;
+    hx+=(tx-hx)*k; hy+=(ty-hy)*k; s+=(ts-s)*k;
+    halo.style.transform='translate3d('+hx.toFixed(1)+'px,'+hy.toFixed(1)+'px,0) scale('+s.toFixed(3)+')';
+  }
+
+  return {
+    init:function(){
+      if(typeof document==='undefined') return;
+      /* 七、pointer halo：仅桌面精确指针启用；reduced-motion 由 CSS display:none 兜底 */
+      if(finePointer()){
+        halo=document.createElement('div');
+        halo.id='homeHalo'; halo.setAttribute('aria-hidden','true');
+        document.body.appendChild(halo);
+        window.addEventListener('mousemove', function(e){
+          tx=e.clientX; ty=e.clientY;
+          if(!started){ started=true; hx=tx; hy=ty; }
+        }, {passive:true});
+        raf=requestAnimationFrame(loop);
+      }
+      /* hover 状态委托：进入首页亮 halo，悬停主按钮略微放大（第九条箭头位移沿用既有 .btn.primary 规则） */
+      document.addEventListener('mouseover', function(e){
+        if(!halo) return;
+        var onBtn=!!(e.target.closest && e.target.closest('.home-hero .cta .btn'));
+        ts=onBtn?1.35:1;
+        halo.classList.toggle('halo-on', onBtn || inHome(e.target));
+      }, {passive:true});
+      /* 点击委托（捕获阶段：先于按钮 onclick 跳转完成几何计算，确保 ripple 依据真实点击位置生成）
+         按钮内真实位置 ripple；首页空白处极轻圆环 */
+      document.addEventListener('click', function(e){
+        var btn=e.target.closest && e.target.closest('.home-hero .cta .btn');
+        if(btn){ spawnRipple(btn, e); return; }
+        if(!reduced() && inHome(e.target)) spawnRing(e.clientX, e.clientY);
+      }, true);
+    }
+  };
+})();
+
 /* ===================== #region 初始化 ===================== */
 APP.Settings.apply();
 APP.render();
 APP.CustomCursor.init();
+APP.HomeFx.init();
 /* 顶栏模式切换 + 设置抽屉交互 */
 (function(){
   var sw=document.getElementById('modeSwitch');
@@ -4894,24 +6026,36 @@ APP.CustomCursor.init();
     });
   });
 })();
-if(typeof window!=='undefined' && !window.__tested){
-  window.__tested=true;
-  var tr=APP.runTests();
-  /* 修复：恢复启动快照并回到首页（测试 IIFE 已整体替换 APP.state 并覆写 localStorage） */
-  var _restoreHome=function(){
-    APP.state=JSON.parse(JSON.stringify(APP.__bootState));
-    APP.state.meta.currentStep='home';
-    APP.Store.save(APP.state);
-    APP.render();
-  };
-  _restoreHome();
-  /* 延迟兜底：测试遗留的异步回调（云端分析 promise 等）会在恢复后再次污染状态并弹提示 */
-  setTimeout(function(){
-    _restoreHome();
+if(typeof window!=='undefined'){
+  /* 1a：测试仅按需执行（?test=1 或 localStorage 标记），不再阻塞正常加载 */
+  var wantTests=false;
+  try{ wantTests = (localStorage.getItem('__qlsj_runTests')==='1'); }catch(e){}
+  try{ if(!wantTests) wantTests = /[?&]test=1/.test(location.search); }catch(e){}
+
+  if(wantTests){
+    /* 测试模式：脚本求值期已静默 toast；跑完后回到干净首页并恢复 toast */
+    window.__tested=true;
+    var _reset=function(){
+      var fresh=APP.Store.fresh(); APP.Store._initSteps(fresh);
+      APP.state.meta.currentStep='home';
+      APP.state.steps=fresh.steps;
+      APP.state.context=fresh.context;
+      APP.Store.save(APP.state);
+      APP.render();
+    };
+    var tr=APP.runTests();
+    _reset();
+    /* 延迟兜底：测试遗留的异步回调（云端分析 promise 等）会在恢复后再次污染状态并弹提示 */
+    setTimeout(function(){
+      _reset();
+      APP.Toast.show=_bootToast;
+    },2500);
+    console.log('[青蓝试讲] 内联测试：'+tr.pass+'/'+tr.total+' 通过');
+    tr.results.filter(function(t){return !t.pass;}).forEach(function(t){ console.warn('[测试失败] '+t.name); });
+  } else {
+    /* 非测试模式：立即恢复 toast（1b 已在启动快照后完成干净首页重置） */
     APP.Toast.show=_bootToast;
-  },2500);
-  console.log('[青蓝试讲] 内联测试：'+tr.pass+'/'+tr.total+' 通过');
-  tr.results.filter(function(t){return !t.pass;}).forEach(function(t){ console.warn('[测试失败] '+t.name); });
+  }
 }
 </script>
 </body>
